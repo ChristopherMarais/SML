@@ -4,6 +4,7 @@
 ##########
 #1
 # import data and break up into train/validation/test sets
+setwd("E:/GIT_REPOS/Classes/SML/hw1")
 data_df <- read.csv("SML.NN.data.csv")
 train_df = data_df[data_df$set == 'train',]
 valid_df = data_df[data_df$set == 'valid',]
@@ -40,14 +41,22 @@ getClass1Prop <- function(x, r, data=train_df) {
 #1.2
 # get class 1 prediction for points in x (multiple)
 # output is a vector of binary predictions
-getClass1Prediction <- function(x, r, t=0.5, data=train_df){
+getClass1Prediction <- function(x, rk, t=0.5, data=train_df, func_type="radius"){
   "t is the threshold and should be between 0 and 1."
   pred_vec = c()
   # loop through all points in x
   for(i in 1:nrow(x)){
     x_i = x[c('X1','X2')][i,] # get coordinates
-    class_1_prop = getClass1Prop(x=x_i, r=r, data=data)
-    if(class_1_prop>=t){
+    if(func_type=="radius"){
+      class_1_prop = getClass1Prop(x=x_i, r=rk, data=data)
+    }else if(func_type=="knn") {
+      class_1_prop = getClass1PropKNN(x=x_i, k=rk, data=data)
+    }
+    
+    if(is.na(class_1_prop)){
+      pred=NA
+    }
+    else if(class_1_prop >= t){
       pred=1
     }else{
       pred=0
@@ -66,7 +75,7 @@ getConfusionMatrix <-function(true, pred){
   pred is the predicted class of the same data"
   df = data.frame(true, pred)
   # calculate equality of data
-  df$equal = df$true == df$pred
+  df$equal = (df$true == df$pred)
   # calculate tp, tn, fp, and fn
   tp = as.numeric(nrow(df[(df$equal == TRUE) & (df$pred == 1),]))
   tn = as.numeric(nrow(df[(df$equal == TRUE) & (df$pred == 0),]))
@@ -98,28 +107,108 @@ getMissClassRate <-function(true, pred){
 plot(train_df[train_df$Y==1,]$X1, 
      train_df[train_df$Y==1,]$X2, 
      main = "Distribution of classes",
-     xlab = "X1", 
+     xlab = "X1",
+     xlim=c(-1.1, 1.1),
      ylab = "X2",
+     ylim=c(-1.1, 1.1),
      pch = 15, 
      col = "blue")
 points(train_df[train_df$Y==0,]$X1, train_df[train_df$Y==0,]$X2, pch = 0, col = "blue")
 points(valid_df[valid_df$Y==1,]$X1, valid_df[valid_df$Y==1,]$X2, pch = 19, col = "red")
 points(valid_df[valid_df$Y==0,]$X1, valid_df[valid_df$Y==0,]$X2, pch = 1, col = "red")
+legend("topleft", 
+       legend=c("Train class 1", "Train class 0", "Valid class 1", "Valid class 0"), 
+       col=c("blue","blue","red","red"), 
+       pch=c(15,0,19,1), 
+       cex=0.8)
 
-# 0.5 seems like a good number for r
+# 0.25 seems like a good number for r?
+# the smaller the better? but too small and NAs become prevalent.
 
 #####
 #1.4
-# select best r for range of r values (grid search)
+# select best r for range of r values
+# get class predictions
+class_pred_lst = lapply(seq(0.01, 0.25, 0.01), 
+                        getClass1Prediction, 
+                        x=valid_df, 
+                        t=0.5, 
+                        data=train_df,
+                        func_type="radius")
+# get miss classification rate
+miss_class_lst = lapply(class_pred_lst, getMissClassRate, true = valid_df$Y)
+# plot results
+plot(x=seq(0.01, 0.25, 0.01), 
+      y=miss_class_lst,
+      main="miss-classifcation by radius",
+     xlab="Radius (r)",
+     ylab="Miss classification rate",
+     col="blue"
+      )
+lines(x=seq(0.01, 0.25, 0.01), 
+      y=miss_class_lst,
+      col="blue")
 
-getMissClassRate(true = valid_df$Y,
-                   pred = getClass1Prediction(x=valid_df, r=0.5, t=0.5, data=train_df))
-
-#####
-#1.5
-# Already reduced loops to only one
+# get value for lowest point
+r_lowest_mcr = getMissClassRate(true = valid_df$Y,
+                                  pred = getClass1Prediction(
+                                    x=valid_df, 
+                                    t=0.5,
+                                    rk=0.12,
+                                    data=train_df,
+                                    func_type="radius"
+                                  ))
 
 #####
 #1.6
 # KNN
-# get lowest missclassrate for KNN and compare to lowest RNN
+getClass1PropKNN <- function(x, k, data=train_df) {
+  "Import the data this function is 
+  based on before using it. The data should be named data_df
+  and contain columns Y, X1, X2, set all in a dataframe.
+  x is a vector of length 2
+  k is the number of neigbours
+  "
+  # calculate the distance between the point and all the data
+  x1 = (data$X1-as.numeric(x[1]))^2
+  x2 = (data$X2-as.numeric(x[2]))^2
+  data$euc_dist = sqrt(rowSums(data.frame(x1,x2)))
+  data = data[order(data$euc_dist),]
+  class_1_prop = sum(data$Y[1:k])/k
+  return(class_1_prop)
+}
+
+# get class predictions
+class_pred_lstKNN = lapply(seq(1, 25, 1), 
+                        getClass1Prediction, 
+                        x=valid_df, 
+                        t=0.5, 
+                        data=train_df,
+                        func_type="knn")
+# get miss classification rate
+miss_class_lstKNN = lapply(class_pred_lstKNN, getMissClassRate, true = valid_df$Y)
+# plot results
+plot(x=seq(1, 25, 1), 
+     y=miss_class_lstKNN,
+     main="miss-classifcation by radius",
+     xlab="Neighbours (k)",
+     ylab="Miss classification rate",
+     col="red"
+)
+lines(x=seq(1, 25, 1), 
+      y=miss_class_lstKNN,
+      col="red")
+
+# get value for lowest point
+knn_lowest_mcr = getMissClassRate(true = valid_df$Y,
+                                   pred = getClass1Prediction(
+                                     x=valid_df, 
+                                     t=0.5,
+                                     rk=14,
+                                     data=train_df,
+                                     func_type="knn"
+                                   ))
+
+
+print(c(r_lowest_mcr, knn_lowest_mcr))
+
