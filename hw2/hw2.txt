@@ -1,0 +1,59 @@
+SML 2019 HW2
+---
+Soft deadline: 11:59PM EST on 24-Sep-2019, Tue
+Hard deadline: 11:59PM EST on 25-Sep-2019, Wed
+-
+You are encouraged to submit before the soft deadline, but no penalties will be applied for submission before the hard deadline
+---
+
+Rules (students must conform to the rules for your submission to be accepted): 
+* students must work individually and independently; 
+* each student may discuss ideas behind solutions with at most one other student, this must be appropriately acknowledged in the front page header of the solutions; sharing code or solutions is not allowed;
+* using solutions of others (e.g., classmates, more senior students that took the course earlier, solutions on the web, solution manuals, etc) is a direct violation of UF Honor Code;
+* if requested, explain the solution to course staff; 
+* submissions: via Dropbox file requests only - submit an archived folder with your solution and running R code, you can embed snippets of code in the solution, but make sure to additionally attach your code as separate R file (it should work!); folder name following convention hwX.MM.DD.HH.mm (omit date if submitting only one copy);
+* only the most recent solution submitted before the deadline will be graded; no penalties for "second, third, ... thoughts" so long as your submission is before the deadline;
+* for problems with equations - typeset (in Rmarkdown, Latex or Word, in the decreasing order of preference) or neatly hand-written and scanned; greyscale or black-and-white (200-300 dpi), no color; please test how your scan outputs respond to your inputs (writing materials - pens/pencils and paper). Smartphone scanners (e.g., MS Office Lens) often produce good output, but please check/test. Solutions must be easily readable and not take enormous amount of digital space (e.g., 10MB is typically an overkill).
+---
+
+Directions for submission (please follow closely to avoid penalties starting with hw2):
+1. Create a single pdf file of your solution (typeset or a readable scan) AND a single file with R code.
+2. Place your R code and your solutions writeup in a folder; then create an archive (zip, rar, tar.gz, etc).
+3. Submit your archive via Dropbox file request at
+tinyurl.com/nbliznyuk-submit-files
+
+I. Recommended problems (do not submit):
+ISLR ch.3: 5,8,9,13
+
+* Practice with basic linear algebra rules (addition, multiplication)
+# inversion of matrices, linear system solving - moved to hw3
+
+* Complete the R lab in Section 3.6 of ISLR.
+
+* Vector calculus (of several variables); the (linear) least squares problem: solve the problem in the posted pdf, file name "vector.calculus.review.SML.FA16.pdf"
+[DO NOT SUBMIT: the pdf file contains the solution; please solve on your own without consulting the solution; then check the solution. References in the pdf file like 6.1, 6.2, etc, refer to the subproblems of this problem.]
+
+II. Required problems (submit):
+ISLR ch.3: 4,10
+
+Typed problem 1: let Y1,...,Yn be iid with E(Yi)=a and E(Yi^2)=b (so that Var(Yi)=b-a^2).
+Let T = sum_{i=1}^n (Yi-Ybar)^2, where Ybar is the sample mean.
+1.1. (Optional as set in the 24-Sep lecture.) Use the properties/calculus of expectations to find E(T).
+If you are not able to find E(T), you can use use E(T) = (n-1)*Var(Yi) in subsequent subproblems.
+1.2. Suppose we estimate the population variance by c*T for some constant c>0. 
+What value of c results in an unbiased estimator of the population variance? 
+(The answer should be c=1/(n-1)). Let T1 = c*T.
+1.3. Let Y1,...,Yn be iid Normal(mu,sig2), where sig2 is the variance. 
+One can show that T2 = T/n is the MLE for sig2; you can take this fact for granted.
+Use R to examine the small-sample properties of T1 and T2 as follows:
+(a) Generate the data as follows:
+m=1000; n=4; # n is the sample size; m is the number of replications
+set.seed(0); 
+M = matrix(rnorm(m*n),nrow=m); # default parameters in rnorm are mean=0, sd=1;
+# M is an m-by-n matrix with replications of the experiment stored in rows
+(b) For each row of M, evaluate and store values of T1 and T2, in separate vectors.
+(Optional): you can do this without loops using apply() function
+(c) Plot histograms of T1 and T2.
+(d) Use "Monte Carlo integration" to estimate bias, variance and MSE of the two estimators. (You can estimate E(T1) and E(T2) using the respective sample means, and (population) variances of T1 and T2 using the sample variances of T1 and T2. I will introduce/review Monte Carlo integration in class on Thur, 19-Sep.)
+Briefly discuss your findings in (c) and (d).
+1.4. Suppose we are now interested in the population standard deviation, i.e., sig=sqrt(sig2). Explain whether sqrt(T1) is biased for estimation of sig, and why. Feel free to extend the simulation study in 1.3 to reinforce your answer.
