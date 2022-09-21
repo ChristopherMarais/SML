@@ -71,35 +71,44 @@ getClass1Prediction <- function(x, rk, t=0.5, data=train_df, func_type="radius")
 # output is a data frame in format:
 # (true positive, false negative)
 # (false positive, true negative)
-getConfusionMatrix <-function(true, pred){
-  "true is the real class of the data
-  pred is the predicted class of the same data"
+# getConfusionMatrix <-function(true, pred){
+#   "true is the real class of the data
+#   pred is the predicted class of the same data"
+#   df = data.frame(true, pred)
+#   # calculate equality of data
+#   df$equal = (df$true == df$pred)
+#   # calculate tp, tn, fp, and fn
+#   tp = as.numeric(nrow(df[(df$equal == TRUE) & (df$pred == 1),]))
+#   tn = as.numeric(nrow(df[(df$equal == TRUE) & (df$pred == 0),]))
+#   fp = as.numeric(nrow(df[(df$equal == FALSE) & (df$pred == 1),]))
+#   fn = as.numeric(nrow(df[(df$equal == FALSE) & (df$pred == 0),]))
+#   # save values in confusion matrix data frame
+#   conf_mat_df = setNames(
+#     data.frame(
+#       c(tp, fp), 
+#       c(fn, tn),
+#       row.names = c('1','0')),
+#     c('1','0'))
+#   return(conf_mat_df)
+# }
+# 
+# # function to get the 
+# getMissClassRate <-function(true, pred){
+#   " Input is true vector and prediction vector
+#   output is a ratio of wrong classifications.
+#   "
+#   conf_mat_df = getConfusionMatrix(true, pred)
+#   miss_class_rate = (conf_mat_df['1','0'] + conf_mat_df['0','1'])/sum(conf_mat_df)
+#   return(miss_class_rate)
+# }
+
+getMissClassRate <- function(true, pred){
+  # make dataframe of predictions and true values
   df = data.frame(true, pred)
   # calculate equality of data
   df$equal = (df$true == df$pred)
-  # calculate tp, tn, fp, and fn
-  tp = as.numeric(nrow(df[(df$equal == TRUE) & (df$pred == 1),]))
-  tn = as.numeric(nrow(df[(df$equal == TRUE) & (df$pred == 0),]))
-  fp = as.numeric(nrow(df[(df$equal == FALSE) & (df$pred == 1),]))
-  fn = as.numeric(nrow(df[(df$equal == FALSE) & (df$pred == 0),]))
-  # save values in confusion matrix data frame
-  conf_mat_df = setNames(
-    data.frame(
-      c(tp, fp), 
-      c(fn, tn),
-      row.names = c('1','0')),
-    c('1','0'))
-  return(conf_mat_df)
-}
-
-# function to get the 
-getMissClassRate <-function(true, pred){
-  " Input is true vector and prediction vector
-  output is a ratio of wrong classifications.
-  "
-  conf_mat_df = getConfusionMatrix(true, pred)
-  miss_class_rate = (conf_mat_df['1','0'] + conf_mat_df['0','1'])/sum(conf_mat_df)
-  return(miss_class_rate)
+  mis_class_rate = 1 - sum(df$equal, na.rm = TRUE)/nrow(df)
+  return(mis_class_rate)
 }
 
 #####
@@ -130,7 +139,8 @@ legend("topleft",
 #1.4
 # select best r for range of r values
 # get class predictions
-class_pred_lst = lapply(seq(0.01, 0.25, 0.01), 
+r_grid = seq(0.01, 0.15, 0.01)
+class_pred_lst = lapply(r_grid, 
                         getClass1Prediction, 
                         x=valid_df, 
                         t=0.5, 
@@ -139,14 +149,15 @@ class_pred_lst = lapply(seq(0.01, 0.25, 0.01),
 # get miss classification rate
 miss_class_lst = lapply(class_pred_lst, getMissClassRate, true = valid_df$Y)
 # plot results
-plot(x=seq(0.01, 0.25, 0.01), 
-      y=miss_class_lst,
-      main="miss-classifcation by radius",
+plot(x=r_grid, 
+     y=miss_class_lst,
+     main="miss-classifcation by radius",
      xlab="Radius (r)",
      ylab="Miss classification rate",
+     ylim=c(0,1),
      col="blue"
-      )
-lines(x=seq(0.01, 0.25, 0.01), 
+)
+lines(x=r_grid, 
       y=miss_class_lst,
       col="blue")
 
@@ -180,7 +191,8 @@ getClass1PropKNN <- function(x, k, data=train_df) {
 }
 
 # get class predictions
-class_pred_lstKNN = lapply(seq(1, 25, 1), 
+k_grid = seq(1, 15, 1)
+class_pred_lstKNN = lapply(k_grid, 
                         getClass1Prediction, 
                         x=valid_df, 
                         t=0.5, 
@@ -189,14 +201,15 @@ class_pred_lstKNN = lapply(seq(1, 25, 1),
 # get miss classification rate
 miss_class_lstKNN = lapply(class_pred_lstKNN, getMissClassRate, true = valid_df$Y)
 # plot results
-plot(x=seq(1, 25, 1), 
+plot(x=k_grid, 
      y=miss_class_lstKNN,
      main="miss-classifcation by radius",
      xlab="Neighbours (k)",
+     ylim = c(0,1),
      ylab="Miss classification rate",
      col="red"
 )
-lines(x=seq(1, 25, 1), 
+lines(x=k_grid, 
       y=miss_class_lstKNN,
       col="red")
 
@@ -212,16 +225,6 @@ knn_lowest_mcr = getMissClassRate(true = valid_df$Y,
 
 
 print(c(r_lowest_mcr, knn_lowest_mcr))
-
-##########
-#2
-##########
-#####
-#2.1
-#####
-#2.2
-#####
-#2.3
 
 ##########
 #3
