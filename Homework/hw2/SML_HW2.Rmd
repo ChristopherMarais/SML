@@ -1,0 +1,194 @@
+---
+title: "ABE6933 SML HW2"
+author: "Yu Chen"
+date: '2022-09-23'
+output: pdf_document
+editor_options: 
+  chunk_output_type: console
+---
+Chap 3 exercise  
+
+4a.  
+```{r}
+set.seed(0)
+X <- seq(0,10,1)
+Y <- rnorm(11,0,1)+X
+lm_linear <- lm(Y~X)
+lm_cubic <- lm(Y~X+I(X^2)+I(X^3))
+summary(lm_linear)$sigma
+summary(lm_cubic)$sigma
+```
+When the true relationship between Y and X is linear. Then the training RSS of cubic model is lower than the other, because the cubic model has more parameters which can make model have more flexibility and can explain more variance. 
+
+4b.
+```{r}
+test_x <- seq(11,20,1)
+test_y <- rnorm(10,0,1)+test_x
+df <- data.frame(Y=test_y,X=test_x)
+df$ypred_linear <- predict(lm_linear, df["X"])
+df$ypred_cubic <- predict(lm_cubic, df["X"])
+myfunc <- function(x,x1,x2) {(x[x1]-x[x2])^2}
+sum(apply(df,1,myfunc,x1="ypred_linear",x2="Y"))
+sum(apply(df,1,myfunc,x1="ypred_cubic",x2="Y"))
+
+test2_x <- seq(1,4,0.01)
+test2_y <- rnorm(301,0,1)+test2_x
+df2 <- data.frame(Y=test2_y,X=test2_x)
+df2$ypred_linear <- predict(lm_linear, df2["X"])
+df2$ypred_cubic <- predict(lm_cubic, df2["X"])
+sum(apply(df2,1,myfunc,x1="ypred_linear",x2="Y"))
+sum(apply(df2,1,myfunc,x1="ypred_cubic",x2="Y"))
+```
+  
+
+4c.  
+For training data, even the true relationship is nonlinear, the cubic model can have a lower RSS because of its flexibility.  
+
+4d.  
+Since nonlinear relationship, if the data is more close to the linear model line, then the linear model RSS will lower, or otherwise.
+
+
+
+10a.  
+
+```{r}
+library(ISLR)
+lm <- lm(Sales~Price+Urban+US, data = Carseats)
+```
+
+10b.  
+```{r}
+summary(lm)
+```
+From summary table, we can get the coef of 'Price' is -0.0546 and it's significant. That is when the urban and us parameter with the same data, one unit of price increase will lead the sales decrease 0.0545 unit. The coef of 'Urban' predictor is -0.0219 and is not significant. When price and US status keep the same, the store is in an urban will decrease 0.0219 unit in sales comparing to the store locates in rural. The coef of 'US' preoditor is 1.201 and is significant. When price and the location of store are the same, the store is in the US will increase 1.201 unit in sales, comparing to the store is not in the US.  
+  
+10c.  
+$y_i = \beta_0 + \beta_1*x_{i1}+\beta_2*x_{i2}+\beta_3*x_{i3}$  
+
+$$
+x_{i2}=\left\{
+\begin{aligned}
+1~~& \text{if ith store is in an urban location} \\
+0~~& \text{if ith store is in an rural location}
+\end{aligned}
+\right.
+$$
+$$
+x_{i3}=\left\{
+\begin{aligned}
+1~~& \text{if ith store is in the US} \\
+0~~& \text{if ith store is not in the US}
+\end{aligned}
+\right.
+$$
+  
+10d.  
+The 'price' predictor and the 'US' predictor can reject the null hypothesis $\beta_j=0$.  
+  
+10e.  
+```{r}
+lm_small <- lm(Sales~Price+US, data = Carseats)
+```
+
+10f.  
+```{r}
+summary(lm)$adj.r.squared
+summary(lm_small)$adj.r.squared
+#anova(lm_small,lm)
+```
+Since they are mutiple models and nested, we cannot simply use R-square to judge the model. Although they are both not well, the adjusted r-square of small model (0.2354305) is a little better than the bigger one (0.2335123). 
+## I take the anova and can see that there is no significant difference between two model, so the smaller one is better.
+
+
+
+10g.  
+```{r}
+confint(lm_small,level=0.95)
+```
+
+1.2  
+\begin{equation*}
+\begin{split}
+E(T_1)&=cE(T)\\&=cE[\sum_{i=1}^n(Y_i-\bar{Y})^2]\\&=cE[\sum_{i=1}^n(Y_i-\mu)^2-2\sum_{i=1}^n(Y_i-\mu)(\bar Y-\mu)+\sum_{i=1}^n(\bar Y-\mu)^2]\\&=cE[\sum_{i=1}^n(Y_i-\mu)^2-2n(\bar Y-\mu)(\bar Y-\mu)+n(\bar Y-\mu)^2]\\&=cE[\sum_{i=1}^n(Y_i-\mu)^2-n(\bar Y-\mu)^2]\\&=c(nvar(Y)-nvar(\bar Y))\\&=c(nvar(Y)-var(Y))\\&=c(n-1)var(Y)
+\end{split}
+\end{equation*}
+
+Given $var(T_1)$ is unbiased for $\sigma^2$, so $c(n-1)=1$. $c=\frac{1}{n-1}$  
+
+1.3 
+a)  
+
+```{r}
+m <- 1000 #replications
+n <- 4 #sample size
+set.seed(0)
+M = matrix(rnorm(m*n),nrow=m)
+```
+  
+b)  
+
+```{r}
+fun_T1 <- function(x) {(1/(length(x)-1))*sum((x-mean(x))^2)}
+T1 <- apply(M, 1, fun_T1)
+fun_T2 <- function(x) {(1/length(x))*sum((x-mean(x))^2)}
+T2 <- apply(M, 1, fun_T2)
+```
+  
+c)  
+
+```{r}
+breaks <- seq(0,6,0.1)
+hist(T1, breaks = breaks)
+hist(T2, breaks = breaks)
+```
+  
+d)  
+
+```{r}
+mse <- function(x,true) {mean((x-true)^2)}
+
+mean(T1)
+var(T1)
+T1_bias <- mean(T1)-1 ; T1_bias #bias of T1
+apply(data.frame(T1),2,mse,true=1) #MSE
+
+mean(T2)
+var(T2)
+T2_bias <- mean(T2)-(n-1)/n ; T2_bias #bias of T2
+apply(data.frame(T2),2,mse,true=(n-1)/n) #MSE
+```
+  
+  
+  
+1.4  
+In 1.2 we show that $T_1$ is a unbiased estimator for $\sigma^2$. $\sigma=\sqrt{\sigma^2}$, so $\sqrt{T_1}$ is unbiased for estimation of $\sigma$.  
+```{r}
+m_1 <- 1000 #replications
+n_1 <- 100 #sample size
+M_1 = matrix(rnorm(m_1*n_1),nrow=m_1)
+
+sqrtfun <- function(x) {sqrt(var(x))}
+sqrt_T1 <- apply(M_1, 1, sqrtfun)
+breaks2 <- seq(0,1.5,0.01)
+hist(sqrt_T1,breaks=breaks2)
+mean(sqrt_T1)
+var(sqrt_T1)
+```
+  
+We get random data from true distribution N(0,1). Then we estimate the $\sigma$ by using $\sqrt{T_1}$ and we can see that it is unbiased.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
