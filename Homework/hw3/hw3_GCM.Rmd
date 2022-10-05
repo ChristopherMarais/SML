@@ -32,7 +32,7 @@ myOLS <- function(Y, X, is1 = TRUE) {
   
   p = ncol(X)
   
-  if(is1==FALSE){
+  if(is1==TRUE){
     # add intercept to matrix
     X0 = rep(1, n)
     X = cbind(X0, X)
@@ -61,7 +61,7 @@ fit1 = lm(Y ~ X); summary(fit1)
 ```
 
 ```{R}
-myOLS(Y,X,FALSE)
+myOLS(Y,X,TRUE)
 ```
 ## 3.2 
 ```{R}
@@ -75,9 +75,8 @@ myPolyReg1 <- function(Y, X1, deg=1) {
     X = cbind(X, X1**i)
   }
   
-  return(myOLS(X=X, Y=Y))
+  return(myOLS(X=X, Y=Y, is1=FALSE))
 }
-
 ```
 
 ```{R}
@@ -101,6 +100,10 @@ myAnova1 <- function(Y, XF, is1=TRUE) {
   uniq_var <- unique(XF)
   X <- +outer(XF, uniq_var, `==`)
   colnames(X) <- uniq_var
+  
+  if(is1==TRUE){
+    X = X[,-1]
+  }
   return(myOLS(X=X, Y=Y, is1=is1))
 }
 ```
@@ -115,7 +118,7 @@ summary(fit1) # with an intercept
 ```
 
 ```{R}
-# myAnova1(Y, XF, is1=FALS)
+myAnova1(Y, XF, is1=TRUE)
 ```
 
 ```{R}
@@ -124,30 +127,34 @@ summary(fit0) # without an intercept
 ```
 
 ```{R}
-myAnova1(Y, XF, is1=TRUE)
+myAnova1(Y, XF, is1=FALSE)
 ```
-
+# Problem 4
+## 4.1
 ```{R}
-
+myFullObj <- function(par) {
+# Inputs:
+# * b is the vector of regression coefficients, b=[b0,b1];
+# * sig is the standard dev of errors; sig > 0
+# Output: the negative log-likelihood of the observed data (Y given X) evaluated at b and sig
+  b = par[1:2]
+  sig = par[3]
+  miu <- b[1]+mean(X)*b[2]
+  (-1)*sum(dnorm(Y, mean=miu, sd = sig, log=TRUE))
+}
 ```
 
+## 4.2 
 ```{R}
+sigKnown = 2
+myObj1 <- function(b){
+  myFullObj(c(b,sigKnown))
+}
 
+optim(par=c(1,3),myObj1,method="BFGS")
 ```
 
+## 4.3 
 ```{R}
-
+optim(par = c(1,3,1), myFullObj,method="L-BFGS-B",lower=c(-Inf, -Inf, 10^(-5)))
 ```
-
-```{R}
-
-```
-
-```{R}
-
-```
-
-```{R}
-
-```
-
