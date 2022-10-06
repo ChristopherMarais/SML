@@ -100,15 +100,84 @@
 \urlstyle{same} % disable monospaced font for URLs
 \hypersetup{
   pdftitle={SML HW3},
+  pdfauthor={Yujia Guo \& Christopher Marais},
   hidelinks,
   pdfcreator={LaTeX via pandoc}}
 
 \title{SML HW3}
-\author{}
-\date{\vspace{-2.5em}}
+\author{Yujia Guo \& Christopher Marais}
+\date{}
 
 \begin{document}
 \maketitle
+
+\hypertarget{problem-1}{%
+\section{Problem 1}\label{problem-1}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{x1 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\DecValTok{6}\NormalTok{,}\DecValTok{2}\NormalTok{,}\DecValTok{9}\NormalTok{,}\DecValTok{1}\NormalTok{)}
+\NormalTok{x2 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\DecValTok{2}\NormalTok{,}\DecValTok{4}\NormalTok{,}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{)}
+\NormalTok{x3 }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\DecValTok{4}\NormalTok{,}\SpecialCharTok{{-}}\DecValTok{2}\NormalTok{,}\DecValTok{8}\NormalTok{,}\SpecialCharTok{{-}}\DecValTok{1}\NormalTok{)}
+\NormalTok{m1 }\OtherTok{\textless{}{-}} \FunctionTok{cbind}\NormalTok{(x1,x2,x3)}
+\NormalTok{lmod }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(x1}\SpecialCharTok{\textasciitilde{}}\NormalTok{x3}\SpecialCharTok{+}\NormalTok{x2)}
+\FunctionTok{summary}\NormalTok{(lmod)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning in summary.lm(lmod): essentially perfect fit: summary may be unreliable
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = x1 ~ x3 + x2)
+## 
+## Residuals:
+##          1          2          3          4 
+## -1.846e-16  5.430e-17  1.086e-16  2.172e-17 
+## 
+## Coefficients:
+##              Estimate Std. Error   t value Pr(>|t|)    
+## (Intercept) 4.441e-16  4.964e-16 8.950e-01    0.535    
+## x3          1.000e+00  4.734e-17 2.112e+16   <2e-16 ***
+## x2          1.000e+00  1.748e-16 5.721e+15   <2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 2.22e-16 on 1 degrees of freedom
+## Multiple R-squared:      1,  Adjusted R-squared:      1 
+## F-statistic: 4.158e+32 on 2 and 1 DF,  p-value: < 2.2e-16
+\end{verbatim}
+
+x1, x2, x3 are linearly dependent. Regress x1 on x2 and x3, we will get
+that the R-squared equals to 1 and RSS=0. Also, since x1 is depend on
+both x1 and x2, the regression p-value of x2 and x3 are both less than
+0.05. In general, A set of vectors \{x1, x2, · · · , xp\} is linearly
+dependent if there exist numbers β1, β2, · · · βp ,not all equal to
+zero, such that β1x1 + β2x2 + · · · + βpxP = 0 It can be re-written as
+x1 = −(β2x2 + · · · + βpxP )/β1 Therefore, we can get a perfect fit and
+the rss will be 0.
+
+\hypertarget{problem-2}{%
+\section{Problem 2}\label{problem-2}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{m2 }\OtherTok{\textless{}{-}} \FunctionTok{matrix}\NormalTok{(}\FunctionTok{rnorm}\NormalTok{(}\DecValTok{10000}\SpecialCharTok{*} \DecValTok{2}\NormalTok{), }\CommentTok{\# Create random matrix}
+\AttributeTok{ncol =} \DecValTok{2}\NormalTok{)}
+\FunctionTok{cor}\NormalTok{(m2[,}\DecValTok{1}\NormalTok{],m2[,}\DecValTok{2}\NormalTok{])}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.01748097
+\end{verbatim}
+
+The correlation of this sample is very closed to 0. We can conclude that
+in general, if numerical predictors are linearly independent, then they
+are uncorrelated.
 
 \hypertarget{problem-3}{%
 \section{Problem 3}\label{problem-3}}
@@ -140,7 +209,7 @@
   
 \NormalTok{  p }\OtherTok{=} \FunctionTok{ncol}\NormalTok{(X)}
   
-  \ControlFlowTok{if}\NormalTok{(is1}\SpecialCharTok{==}\ConstantTok{TRUE}\NormalTok{)\{}
+  \ControlFlowTok{if}\NormalTok{(is1}\SpecialCharTok{==}\ConstantTok{FALSE}\NormalTok{)\{}
     \CommentTok{\# add intercept to matrix}
 \NormalTok{    X0 }\OtherTok{=} \FunctionTok{rep}\NormalTok{(}\DecValTok{1}\NormalTok{, n)}
 \NormalTok{    X }\OtherTok{=} \FunctionTok{cbind}\NormalTok{(X0, X)}
@@ -194,7 +263,7 @@
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\FunctionTok{myOLS}\NormalTok{(Y,X,}\ConstantTok{TRUE}\NormalTok{)}
+\FunctionTok{myOLS}\NormalTok{(Y,X,}\ConstantTok{FALSE}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -226,7 +295,7 @@
 \NormalTok{    X }\OtherTok{=} \FunctionTok{cbind}\NormalTok{(X, X1}\SpecialCharTok{**}\NormalTok{i)}
 \NormalTok{  \}}
   
-  \FunctionTok{return}\NormalTok{(}\FunctionTok{myOLS}\NormalTok{(}\AttributeTok{X=}\NormalTok{X, }\AttributeTok{Y=}\NormalTok{Y, }\AttributeTok{is1=}\ConstantTok{FALSE}\NormalTok{))}
+  \FunctionTok{return}\NormalTok{(}\FunctionTok{myOLS}\NormalTok{(}\AttributeTok{X=}\NormalTok{X, }\AttributeTok{Y=}\NormalTok{Y, }\AttributeTok{is1=}\ConstantTok{TRUE}\NormalTok{))}
 \NormalTok{\}}
 \end{Highlighting}
 \end{Shaded}
@@ -297,7 +366,7 @@
 \NormalTok{  X }\OtherTok{\textless{}{-}} \SpecialCharTok{+}\FunctionTok{outer}\NormalTok{(XF, uniq\_var, }\StringTok{\textasciigrave{}}\AttributeTok{==}\StringTok{\textasciigrave{}}\NormalTok{)}
   \FunctionTok{colnames}\NormalTok{(X) }\OtherTok{\textless{}{-}}\NormalTok{ uniq\_var}
   
-  \ControlFlowTok{if}\NormalTok{(is1}\SpecialCharTok{==}\ConstantTok{TRUE}\NormalTok{)\{}
+  \ControlFlowTok{if}\NormalTok{(is1}\SpecialCharTok{==}\ConstantTok{FALSE}\NormalTok{)\{}
 \NormalTok{    X }\OtherTok{=}\NormalTok{ X[,}\SpecialCharTok{{-}}\DecValTok{1}\NormalTok{]}
 \NormalTok{  \}}
   \FunctionTok{return}\NormalTok{(}\FunctionTok{myOLS}\NormalTok{(}\AttributeTok{X=}\NormalTok{X, }\AttributeTok{Y=}\NormalTok{Y, }\AttributeTok{is1=}\NormalTok{is1))}
@@ -340,7 +409,7 @@
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\FunctionTok{myAnova1}\NormalTok{(Y, XF, }\AttributeTok{is1=}\ConstantTok{TRUE}\NormalTok{)}
+\FunctionTok{myAnova1}\NormalTok{(Y, XF, }\AttributeTok{is1=}\ConstantTok{FALSE}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -387,7 +456,7 @@
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\FunctionTok{myAnova1}\NormalTok{(Y, XF, }\AttributeTok{is1=}\ConstantTok{FALSE}\NormalTok{)}
+\FunctionTok{myAnova1}\NormalTok{(Y, XF, }\AttributeTok{is1=}\ConstantTok{TRUE}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -406,6 +475,38 @@
 \hypertarget{problem-4}{%
 \section{Problem 4}\label{problem-4}}
 
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{n }\OtherTok{=} \DecValTok{30} 
+\FunctionTok{set.seed}\NormalTok{(}\DecValTok{0}\NormalTok{)}
+\NormalTok{X }\OtherTok{=} \FunctionTok{runif}\NormalTok{(n)}\SpecialCharTok{*}\DecValTok{4{-}2}
+\NormalTok{Y }\OtherTok{=} \DecValTok{1} \SpecialCharTok{+} \DecValTok{3}\SpecialCharTok{*}\NormalTok{X }\SpecialCharTok{+} \FunctionTok{rnorm}\NormalTok{(n)}
+\NormalTok{fit1 }\OtherTok{=} \FunctionTok{lm}\NormalTok{(Y }\SpecialCharTok{\textasciitilde{}}\NormalTok{ X) }
+\FunctionTok{summary}\NormalTok{(fit1) }\CommentTok{\# beta0\_hat = 1.0161; beta1\_hat = 2.9304}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = Y ~ X)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -1.2486 -0.5518 -0.1069  0.5028  1.6770 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)   1.0161     0.1480   6.867 1.84e-07 ***
+## X             2.9304     0.1241  23.605  < 2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.8068 on 28 degrees of freedom
+## Multiple R-squared:  0.9522, Adjusted R-squared:  0.9504 
+## F-statistic: 557.2 on 1 and 28 DF,  p-value: < 2.2e-16
+\end{verbatim}
+
 \hypertarget{section-3}{%
 \subsection{4.1}\label{section-3}}
 
@@ -419,7 +520,7 @@
 \NormalTok{  b }\OtherTok{=}\NormalTok{ par[}\DecValTok{1}\SpecialCharTok{:}\DecValTok{2}\NormalTok{]}
 \NormalTok{  sig }\OtherTok{=}\NormalTok{ par[}\DecValTok{3}\NormalTok{]}
 \NormalTok{  miu }\OtherTok{\textless{}{-}}\NormalTok{ b[}\DecValTok{1}\NormalTok{]}\SpecialCharTok{+}\FunctionTok{mean}\NormalTok{(X)}\SpecialCharTok{*}\NormalTok{b[}\DecValTok{2}\NormalTok{]}
-\NormalTok{  (}\SpecialCharTok{{-}}\DecValTok{1}\NormalTok{)}\SpecialCharTok{*}\FunctionTok{sum}\NormalTok{(}\FunctionTok{dnorm}\NormalTok{(Y, }\AttributeTok{mean=}\NormalTok{miu, }\AttributeTok{sd =}\NormalTok{ sig, }\AttributeTok{log=}\ConstantTok{TRUE}\NormalTok{))}
+  \FunctionTok{return}\NormalTok{((}\SpecialCharTok{{-}}\DecValTok{1}\NormalTok{)}\SpecialCharTok{*}\FunctionTok{sum}\NormalTok{(}\FunctionTok{dnorm}\NormalTok{(Y, }\AttributeTok{mean=}\NormalTok{miu, }\AttributeTok{sd =}\NormalTok{ sig, }\AttributeTok{log=}\ConstantTok{TRUE}\NormalTok{)))}
 \NormalTok{\}}
 \end{Highlighting}
 \end{Shaded}
@@ -429,21 +530,25 @@
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{sigKnown }\OtherTok{=} \DecValTok{2}
-\NormalTok{myObj1 }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(b)\{}
-  \FunctionTok{myFullObj}\NormalTok{(}\FunctionTok{c}\NormalTok{(b,sigKnown))}
+\ControlFlowTok{for}\NormalTok{(i }\ControlFlowTok{in} \FunctionTok{c}\NormalTok{(}\DecValTok{2}\NormalTok{,}\FloatTok{0.1}\NormalTok{,}\DecValTok{1}\NormalTok{,}\DecValTok{10}\NormalTok{,}\DecValTok{100}\NormalTok{))\{}
+\NormalTok{  sigKnown }\OtherTok{=}\NormalTok{ i}
+\NormalTok{  myObj1 }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(b)\{}
+    \FunctionTok{myFullObj}\NormalTok{(}\FunctionTok{c}\NormalTok{(b,sigKnown))}
+\NormalTok{  \}}
+  \FunctionTok{print}\NormalTok{(}\FunctionTok{c}\NormalTok{(}\StringTok{"Sigknown = "}\NormalTok{, i))}
+  \FunctionTok{print}\NormalTok{(}\FunctionTok{optim}\NormalTok{(}\AttributeTok{par=}\FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{3}\NormalTok{),myObj1,}\AttributeTok{method=}\StringTok{"BFGS"}\NormalTok{))}
+  \FunctionTok{print}\NormalTok{(}\StringTok{"{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}"}\NormalTok{)}
 \NormalTok{\}}
-
-\FunctionTok{optim}\NormalTok{(}\AttributeTok{par=}\FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{3}\NormalTok{),myObj1,}\AttributeTok{method=}\StringTok{"BFGS"}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
+## [1] "Sigknown = " "2"          
 ## $par
-## [1] 1.676241 3.076002
+## [1] 1.008136 3.000914
 ## 
 ## $value
-## [1] 53.16802
+## [1] 95.97173
 ## 
 ## $counts
 ## function gradient 
@@ -454,27 +559,112 @@
 ## 
 ## $message
 ## NULL
+## 
+## [1] "----------------"
+## [1] "Sigknown = " "0.1"        
+## $par
+## [1] 1.008136 3.000914
+## 
+## $value
+## [1] 19002.15
+## 
+## $counts
+## function gradient 
+##       20        2 
+## 
+## $convergence
+## [1] 0
+## 
+## $message
+## NULL
+## 
+## [1] "----------------"
+## [1] "Sigknown = " "1"          
+## $par
+## [1] 1.008136 3.000914
+## 
+## $value
+## [1] 218.0048
+## 
+## $counts
+## function gradient 
+##        5        3 
+## 
+## $convergence
+## [1] 0
+## 
+## $message
+## NULL
+## 
+## [1] "----------------"
+## [1] "Sigknown = " "10"         
+## $par
+## [1] 1.008136 3.000914
+## 
+## $value
+## [1] 98.55008
+## 
+## $counts
+## function gradient 
+##        3        3 
+## 
+## $convergence
+## [1] 0
+## 
+## $message
+## NULL
+## 
+## [1] "----------------"
+## [1] "Sigknown = " "100"        
+## $par
+## [1] 1.000025 3.000003
+## 
+## $value
+## [1] 165.7423
+## 
+## $counts
+## function gradient 
+##        2        1 
+## 
+## $convergence
+## [1] 0
+## 
+## $message
+## NULL
+## 
+## [1] "----------------"
 \end{verbatim}
+
+For all the tested values of sigma (0.1, 1, 10, 100) it produces very
+similar results with beta0\_hat always close to 1 and beta1\_hat always
+very close to 3. The negative log-likelihood for each of these differ
+though. This means that no matter the standard deviation it is always
+able to minimize the function to the same beta parameters.
+
+These results are very similar to the ones produced by the lm()
+function. This means that both methods converge at a similar answer for
+a linear regression model that describes the data. This is likely
+because the estimated line is the best fit to the data.
 
 \hypertarget{section-5}{%
 \subsection{4.3}\label{section-5}}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\FunctionTok{optim}\NormalTok{(}\AttributeTok{par =} \FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{3}\NormalTok{,}\DecValTok{1}\NormalTok{), myFullObj,}\AttributeTok{method=}\StringTok{"L{-}BFGS{-}B"}\NormalTok{,}\AttributeTok{lower=}\FunctionTok{c}\NormalTok{(}\SpecialCharTok{{-}}\ConstantTok{Inf}\NormalTok{, }\SpecialCharTok{{-}}\ConstantTok{Inf}\NormalTok{, }\DecValTok{10}\SpecialCharTok{\^{}}\NormalTok{(}\SpecialCharTok{{-}}\DecValTok{5}\NormalTok{)))}
+\FunctionTok{optim}\NormalTok{(}\AttributeTok{par =} \FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{3}\NormalTok{,}\DecValTok{0}\NormalTok{), myFullObj,}\AttributeTok{method=}\StringTok{"L{-}BFGS{-}B"}\NormalTok{,}\AttributeTok{lower=}\FunctionTok{c}\NormalTok{(}\SpecialCharTok{{-}}\ConstantTok{Inf}\NormalTok{, }\SpecialCharTok{{-}}\ConstantTok{Inf}\NormalTok{, }\DecValTok{10}\SpecialCharTok{\^{}}\NormalTok{(}\SpecialCharTok{{-}}\DecValTok{5}\NormalTok{)))}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
 ## $par
-## [1] 1.676241 3.076002 1.132013
+## [1] 1.008170 3.000571 3.563113
 ## 
 ## $value
-## [1] 46.28807
+## [1] 80.6872
 ## 
 ## $counts
 ## function gradient 
-##       12       12 
+##       32       32 
 ## 
 ## $convergence
 ## [1] 0
@@ -482,5 +672,12 @@
 ## $message
 ## [1] "CONVERGENCE: REL_REDUCTION_OF_F <= FACTR*EPSMCH"
 \end{verbatim}
+
+For different values of beta0\_hat and beta1\_hat the sigma value stays
+constant at approximately 3.56. When optim() is initialized with
+different values of beta0\_hat and beta1\_hat it converges at different
+estimates of beta but the sigma estimate stays the same. This means that
+there are multiple values of beta0\_hat and beta1\_hat that are optimal
+but only one optimum for sigma.
 
 \end{document}

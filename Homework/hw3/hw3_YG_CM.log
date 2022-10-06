@@ -2,8 +2,8 @@ This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded forma
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
-**hw3_GCM.tex
-(./hw3_GCM.tex
+**hw3_YG_CM.tex
+(./hw3_YG_CM.tex
 LaTeX2e <2022-06-01> patch level 5
 L3 programming layer <2022-09-28> (c:/Users/GCM/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/base/article.cls
 Document Class: article 2021/10/04 v1.4n Standard LaTeX document class
@@ -321,8 +321,8 @@ File: l3backend-pdftex.def 2022-09-28 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count288
 \l__pdf_internal_box=\box54
 )
-No file hw3_GCM.aux.
-\openout1 = `hw3_GCM.aux'.
+No file hw3_YG_CM.aux.
+\openout1 = `hw3_YG_CM.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 111.
 LaTeX Font Info:    ... okay on input line 111.
@@ -384,7 +384,7 @@ File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Live
 
 Package hyperref Info: Link coloring OFF on input line 111.
 \@outlinefile=\write4
-\openout4 = `hw3_GCM.out'.
+\openout4 = `hw3_YG_CM.out'.
 
 LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 113.
 (c:/Users/GCM/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/lm/ot1lmr.fd
@@ -436,11 +436,11 @@ l.158 dependent if there exist numbers β
                                          1, β2, · · · βp ,not all equal to 
 Here is how much of TeX's memory you used:
  10978 strings out of 477031
- 173322 string characters out of 5826797
- 510135 words of memory out of 5000000
+ 173340 string characters out of 5826797
+ 510141 words of memory out of 5000000
  31969 multiletter control sequences out of 15000+600000
  497504 words of font info for 52 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 72i,6n,77p,312b,398s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 72i,6n,77p,314b,398s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
 !  ==> Fatal error occurred, no output PDF file produced!
