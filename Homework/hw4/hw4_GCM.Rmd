@@ -153,6 +153,13 @@ MCR(
 ```
 
 ## Visualize decision boundaries
+```{R}
+axis_ticks = seq(0,10,1)
+grid_df = expand.grid(axis_ticks,axis_ticks)
+plot(grid_df)
+
+```
+
 
 #### L1
 
