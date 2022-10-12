@@ -154,9 +154,49 @@ MCR(
 
 ## Visualize decision boundaries
 ```{R}
-axis_ticks = seq(0,10,1)
+# define threshold
+threshold = 0.5
+
+# create grid of points
+axis_ticks = seq(-1.5,1.5,0.1)
 grid_df = expand.grid(axis_ticks,axis_ticks)
-plot(grid_df)
+colnames(grid_df) <- c("X1","X2")
+
+# L1 prediction
+L1_probs = data.frame(
+              predict(L1, 
+                    grid_df,
+                    type ="response"
+                    )
+              )
+
+grid_df$L1 = as.integer((L1_probs>threshold))
+
+# L2 prediction
+L2_probs = data.frame(
+              predict(L2, 
+                    grid_df,
+                    type ="response"
+                    )
+              )
+
+grid_df$L2 = as.integer((L2_probs>threshold))
+
+# D1 prediction
+D1_probs = data.frame(
+                predict(D1, 
+                    grid_df)$posterior[,2]
+              )
+
+grid_df$D1 = as.integer((D1_probs>threshold))
+
+# D2 prediction
+D2_probs = data.frame(
+                predict(D2, 
+                    grid_df)$posterior[,2]
+              )
+
+grid_df$D2 = as.integer((D2_probs>threshold))
 
 ```
 
