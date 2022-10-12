@@ -1,0 +1,179 @@
+---
+title: "STA6703 SML HW4"
+author: "Christopher Marais"
+output: pdf_document
+fontsize: 11pt
+geometry: margin=2cm
+---
+#### Import data and load libraries
+
+```{R}
+# load data
+setwd(getwd())
+data <- read.csv("SML.NN.data.csv")
+train_data = data[data$set == 'train' | data$set == 'valid',]
+test_data = data[data$set == 'test',]
+
+# load MASS
+library(MASS)
+```
+
+# Chapter 4
+## Question 5
+#### 5.a
+```{R}
+
+```
+
+# Problem 1
+#### 1.a
+
+```{R}
+
+```
+
+# Problem 2
+## Train models
+#### L1
+
+```{R}
+L1 = glm(Y ~ 1 + X1 + X2, 
+        data=train_data, 
+        family=binomial)
+
+summary(L1)
+```
+
+#### L2
+
+```{R}
+L2 = glm(Y ~ 1 + X1 + X2 + X1^2 + X2^2 + X1*X2, 
+        data=train_data, 
+        family=binomial)
+
+summary(L2)
+```
+
+#### LDA
+
+```{R}
+D1 = lda(Y ~ X1 + X2,
+        data=train_data)
+
+D1
+```
+
+#### QDA
+
+```{R}
+D2 = qda(Y ~ X1 + X2,
+         data=train_data)
+
+D2
+```
+
+## Test models
+#### Misclassification rate function
+```{R}
+MCR <- function(true_vals, pred_probs, threshold=0.5){
+  if(length(true_vals)!=length(pred_probs)){
+    print("ERROR: predictions and true values not of same shape")
+  }else{
+    pred_vals = as.integer((pred_probs > threshold))
+    mcr = sum(pred_vals != true_vals)/length(true_vals)
+    return(mcr)
+  }
+}
+
+```
+
+#### L1
+
+```{R}
+L1_probs = data.frame(
+              predict(L1, 
+                    test_data,
+                    type ="response"
+                    )
+              )
+
+MCR(
+  true_vals=test_data$Y,
+  pred_probs=L1_probs[,1],
+  threshold=0.5)
+
+```
+
+#### L2
+
+```{R}
+L2_probs = data.frame(
+              predict(L2, 
+                    test_data,
+                    type ="response"
+                    )
+              )
+
+MCR(
+  true_vals=test_data$Y,
+  pred_probs=L2_probs[,1],
+  threshold=0.5)
+
+```
+
+#### LDA
+
+```{R}
+D1_probs = data.frame(
+                predict(D1, 
+                    test_data)$posterior[,2]
+              )
+
+MCR(
+  true_vals=test_data$Y,
+  pred_probs=D1_probs[,1],
+  threshold=0.5)
+
+```
+
+#### QDA
+
+```{R}
+D2_probs = data.frame(
+                predict(D2, 
+                    test_data)$posterior[,2]
+              )
+
+
+MCR(
+  true_vals=test_data$Y,
+  pred_probs=D2_probs[,1],
+  threshold=0.5)
+
+```
+
+## Visualize decision boundaries
+
+#### L1
+
+```{R}
+
+```
+
+#### L2
+
+```{R}
+
+```
+
+#### LDA
+
+```{R}
+
+```
+
+#### QDA
+
+```{R}
+
+```
