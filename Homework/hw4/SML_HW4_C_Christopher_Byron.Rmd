@@ -1,0 +1,564 @@
+---
+title: "STA6703 SML HW4"
+author: "Christopher and Byron "
+output: pdf_document
+fontsize: 11pt
+geometry: margin=2cm
+---
+## Load libraries
+
+```{R}
+library(MASS)
+library(ISLR2)
+```
+
+## Define a utility function
+
+```{R}
+MCR <- function(true_vals, pred_probs, threshold=0.5){
+  if(length(true_vals)!=length(pred_probs)){
+    print("ERROR: predictions and true values not of same shape")
+  }else{
+    pred_vals = as.integer((pred_probs > threshold))
+    mcr = sum(pred_vals != true_vals)/length(true_vals)
+    return(mcr)
+  }
+}
+
+```
+
+\newpage
+
+# Chapter 4
+
+## Question 5
+
+### 5.a
+
+LDA is better on the test set and QDA is better with the training set. QDA is able to describe non-linear boundaries and LDA only able to describe linear boundaries. So if the test set has a linear boundary the LDA technique will generalize better, but the QDA technique will over fit to the training data easier. 
+
+### 5.b
+
+QDA will be better in the training set and in the testing set. 
+
+### 5.c
+
+With more data QDA will become better at estimating the true boundary. With more data we expect the sample to be a more accurate representation of the test data. Therefore the QDA method will generalize better to the test data. The effect of over fitting will decrease.
+
+### 5.d
+False, LDA will better fit a linear decision boundary. QDA could provide an over-fitting model that will perform better on the training set, but worse on the test set. LDA will probably fit the linear decision boundary better than QDA and result in a lower test error rate.
+
+
+## Question 9
+
+### 9.a
+
+$$\begin{aligned}
+Odds &= \frac{P(X)}{1-P(X)}\\[5pt]
+0.37 &= \frac{P(X)}{1-P(X)}\\[5pt]
+P(X) &= \frac{0.37}{1.37} = 0.27 
+\end{aligned}$$
+
+With an odds of 0.37 it means 27% of people will default on their credit card payments.
+
+### 9.b
+
+$$\begin{aligned}
+Odds &= \frac{0.16}{1-0.16}\\[5pt]
+Odds &= 0.19
+\end{aligned}$$
+
+With a 16\% chance of defaulting, the odds that she will default is 0.19.
+
+## Question 11
+
+### 11.a
+
+\vspace{-5mm}
+
+```{R}
+auto_data = Auto
+mpg_med = median(auto_data$mpg); mpg_med
+auto_data$mpg01 = as.integer((auto_data$mpg > mpg_med)); set.seed(3)
+auto_data[sample(1:length(auto_data[, 1]), 5, replace = FALSE), c(1, 9, 10)]
+```
+
+### 11.b
+
+\vspace{-5mm}
+
+<!-- ```{R, fig.width = 4, fig.height = 4, fig.align='center'} -->
+<!-- heatmap(cor(auto_data[, -9])) -->
+<!-- ``` -->
+
+```{R}
+library(pheatmap)
+pheatmap(cor(auto_data[, -9]), display_numbers = T,
+         cluster_rows = FALSE, cluster_cols = FALSE)
+# heatmap(cor(auto_data[, -9]), Colv = NA, Rowv = NA, revC = TRUE)
+```
+
+```{R}
+boxplot(auto_data[, c(-9)])
+```
+
+Use `cylinders`, `displacement`, `weight` and, `horsepower` as they all have strong negative correlations with `mpg01`. `mpg` has a strong positive correlation, but was used to create `mpg01` so it is not independent. 
+
+### 11.c
+
+```{R}
+set.seed(42)
+sample <- sample.int(n = nrow(auto_data), 
+                     size = floor(0.75*nrow(auto_data)), 
+                     replace = F)
+
+train <- auto_data[sample, ]
+test  <- auto_data[-sample, ]
+```
+
+### 11.d
+```{R}
+lda_auto = lda(mpg01 ~ cylinders+displacement+horsepower+weight, data=train)
+lda_auto
+```
+
+```{R}
+lda_auto_probs = data.frame(
+                    predict(lda_auto, 
+                        test)$posterior[,2]
+                  )
+
+MCR(
+  true_vals=test$mpg01,
+  pred_probs=lda_auto_probs[,1],
+  threshold=0.5)
+```
+
+### 11.e
+```{R}
+qda_auto = qda(mpg01 ~ cylinders+displacement+horsepower+weight, data=train)
+qda_auto
+```
+
+```{R}
+qda_auto_probs = data.frame(
+                    predict(qda_auto, 
+                        test)$posterior[,2]
+                  )
+
+MCR(
+  true_vals=test$mpg01,
+  pred_probs=qda_auto_probs[,1],
+  threshold=0.5)
+```
+
+### 11.f
+```{R}
+lr_auto = glm(mpg01 ~ cylinders+displacement+horsepower+weight, 
+        data=train, 
+        family="binomial")
+
+summary(lr_auto)
+```
+
+```{R}
+lr_auto_probs = data.frame(
+              predict(lr_auto, 
+                    test,
+                    type ="response"
+                    )
+              )
+
+MCR(
+  true_vals=test$mpg01,
+  pred_probs=lr_auto_probs[,1],
+  threshold=0.5)
+
+```
+
+
+\newpage
+
+# Typed Problem 1
+
+```{R}
+# Read and give additional format to the data
+data <- read.fwf("challenger/challenger.dat", width=c(8,8,8,8),
+                  col.names=c("flight", "degrees", "numfail", "indfail"))[1:23, ]
+
+y = matrix(data$indfail, ncol = 1)
+x = matrix(data$degrees, ncol = 1)
+X = matrix(c(x^0, x), ncol = 2)
+```
+
+## 1.a
+
+```{R}
+logLikelihood = function(b) {
+  s = X %*% b
+  p = exp(s) / (1 + exp(s))
+  # logpy = sum(log(p) * (y == 1)) + sum(log(1 - p) * (y == 0)) 
+  logpy = sum(dbinom(y, 1, p, log = TRUE))
+  return(-logpy)
+}
+```
+
+## 1.b
+
+```{R}
+init = matrix(c(0, 0), ncol = 1)
+mle = optim(init, logLikelihood, method = "BFGS")$par
+c("(Intercept)" = mle[1], "degrees" = mle[2])
+
+glm1 = glm(indfail ~ degrees, family = binomial, data = data)
+glm1$coefficients
+
+
+```
+
+\newpage
+
+```{R}
+summary(glm1)
+```
+
+As we can see, the obtained values in both cases are similar, the deviations could be due to the difference on the numerical methods used in both cases.
+
+## 1.c
+
+### (i) First, a function to get the Hessian of function $f$
+
+```{R}
+delta = 1e-4
+gradF = function(f, x) {
+  p = length(x)
+  X = t(matrix(rep(x, p), ncol = p))
+  J = (f(X + delta * diag(p)) - f(X - delta * diag(p))) / (2 * delta)
+  basis = diag(p)
+  for (i in 1:p){
+    J[i] = (f(x + delta * basis[, i]) - f(x - delta * basis[, i])) / (2 * delta) 
+  }
+  return(t(J))
+}
+```
+
+\vspace{2cm}
+
+```{R}
+hessF = function(f, x) {
+  g = function(x) gradF(f, x)
+  p = length(x)
+  H = diag(p)
+  basis = diag(p)
+  for (i in 1:p){
+    H[, i] = (g(x + delta * basis[, i]) - g(x - delta * basis[, i])) / (2 * delta)
+  }
+  return(H)
+}
+# test:
+f = function(x)  x[1]^2 + 2 * x[2]^2  - 2 * x[1] * x[2] + exp(x[1])
+gradF(f, matrix(c(0, 0), ncol = 1))
+hessF(f, matrix(c(0, 0), ncol = 1))
+```
+
+### (ii) Approximate Hessian of the log-Likelihood
+
+```{R}
+H = hessF(logLikelihood, mle); H
+```
+### (iii) Approximate the covariance matrix
+
+```{R}
+S = solve(H); S
+summary(glm1)$cov.unscaled
+```
+
+### (iv) Approximate the standar errors
+
+```{R}
+sde = sqrt(diag(S)); c("(Intercept)" = sde[1], "degrees" = sde[2])
+summary(glm1)$coefficients[, 2] # second column (Std. Error)
+```
+
+As expected, the approximation of the standard deviation using the estimated covariance matrix, is similar to the standard errors found by \texttt{glm}. 
+
+
+\newpage
+
+# Problem 2
+
+## Import data
+
+```{R}
+# load data
+data <- read.csv("SML.NN.data.csv")
+train_data = data[data$set == 'train' | data$set == 'valid',]
+test_data = data[data$set == 'test',]
+```
+
+```{R}
+plot(train_data$X1, 
+     train_data$X2, 
+     pch=8, 
+     col=factor(train_data$Y),
+     main='Training Data',
+     xlab="X1",
+     ylab="X2")
+
+legend(1.3, 
+       1.5, 
+       legend=c('1', '0'),
+       col=c('r', 'b'),
+       fill=2:1,
+       bg="white")
+```
+
+\newpage
+
+```{R}
+plot(test_data$X1, 
+     test_data$X2, 
+     pch=8, 
+     col=factor(test_data$Y),
+     main='Testing Data',
+     xlab="X1",
+     ylab="X2")
+
+legend(1.3, 
+       1.5, 
+       legend=c('1', '0'),
+       col=c('r', 'b'),
+       fill=2:1,
+       bg="white")
+```
+
+## Train models
+
+### L1
+```{R}
+L1 = glm(Y ~ 1 + X1 + X2, 
+        data=train_data, 
+        family="binomial")
+
+summary(L1)
+```
+
+### L2
+
+```{R}
+L2 = glm(Y ~ 1 + X1 + X2 + X1^2 + X2^2 + X1*X2, 
+        data=train_data, 
+        family="binomial")
+
+summary(L2)
+```
+
+### LDA
+
+```{R}
+D1 = lda(Y ~ X1 + X2,
+        data=train_data)
+
+D1
+```
+
+### QDA
+
+```{R}
+D2 = qda(Y ~ X1 + X2,
+         data=train_data)
+
+D2
+```
+
+## Test models
+
+### L1
+
+```{R}
+L1_probs = data.frame(
+              predict(L1, 
+                    test_data,
+                    type ="response"
+                    )
+              )
+
+MCR(
+  true_vals=test_data$Y,
+  pred_probs=L1_probs[,1],
+  threshold=0.5)
+
+```
+
+### L2
+
+```{R}
+L2_probs = data.frame(
+              predict(L2, 
+                    test_data,
+                    type ="response"
+                    )
+              )
+
+MCR(
+  true_vals=test_data$Y,
+  pred_probs=L2_probs[,1],
+  threshold=0.5)
+
+```
+
+### LDA
+
+```{R}
+D1_probs = data.frame(
+                predict(D1, 
+                    test_data)$posterior[,2]
+              )
+
+MCR(
+  true_vals=test_data$Y,
+  pred_probs=D1_probs[,1],
+  threshold=0.5)
+
+```
+
+### QDA
+
+```{R}
+D2_probs = data.frame(
+                predict(D2, 
+                    test_data)$posterior[,2]
+              )
+
+
+MCR(
+  true_vals=test_data$Y,
+  pred_probs=D2_probs[,1],
+  threshold=0.5)
+
+```
+
+## Visualize decision boundaries
+
+```{R}
+# define threshold
+threshold = 0.5
+
+# create grid of points
+axis_ticks = seq(-2,2,0.1)
+grid_df = expand.grid(axis_ticks,axis_ticks)
+colnames(grid_df) <- c("X1","X2")
+
+# L1 prediction
+L1_probs = data.frame(
+              predict(L1, 
+                    grid_df,
+                    type ="response"
+                    )
+              )
+
+grid_df$L1 = as.integer((L1_probs>threshold))
+
+# L2 prediction
+L2_probs = data.frame(
+              predict(L2, 
+                    grid_df,
+                    type ="response"
+                    )
+              )
+
+grid_df$L2 = as.integer((L2_probs>threshold))
+
+# D1 prediction
+D1_probs = data.frame(
+                predict(D1, 
+                    grid_df)$posterior[,2]
+              )
+
+grid_df$D1 = as.integer((D1_probs>threshold))
+
+# D2 prediction
+D2_probs = data.frame(
+                predict(D2, 
+                    grid_df)$posterior[,2]
+              )
+
+grid_df$D2 = as.integer((D2_probs>threshold))
+
+```
+
+
+### L1
+
+```{R}
+plot(grid_df$X1, 
+     grid_df$X2, 
+     pch=8, 
+     col=factor(grid_df$L1),
+     main='L1',
+     xlab="X1",
+     ylab="X2")
+
+legend(1.3, 
+       1.5, 
+       legend=c('1', '0'),
+       col=c('r', 'b'),
+       fill=2:1,
+       bg="white")
+```
+
+### L2
+
+```{R}
+plot(grid_df$X1, 
+     grid_df$X2, 
+     pch=8, 
+     col=factor(grid_df$L2),
+     main='L2',
+     xlab="X1",
+     ylab="X2")
+
+legend(1.3, 
+       1.5, 
+       legend=c('1', '0'),
+       col=c('r', 'b'),
+       fill=2:1,
+       bg="white")
+```
+
+### LDA
+
+```{R}
+plot(grid_df$X1, 
+     grid_df$X2, 
+     pch=8, 
+     col=factor(grid_df$D1),
+     main='D1',
+     xlab="X1",
+     ylab="X2")
+
+legend(1.3, 
+       1.5, 
+       legend=c('1', '0'),
+       col=c('r', 'b'),
+       fill=2:1,
+       bg="white")
+```
+
+### QDA
+```{R}
+plot(grid_df$X1, 
+     grid_df$X2, 
+     pch=8, 
+     col=factor(grid_df$D2),
+     main='D2',
+     xlab="X1",
+     ylab="X2")
+
+legend(1.3, 
+       1.5, 
+       legend=c('1', '0'),
+       col=c('r', 'b'),
+       fill=2:1,
+       bg="white")
+```
