@@ -6,6 +6,7 @@ fontsize: 11pt
 geometry: margin=2cm
 ---
 # Problem 1
+
 ```{R}
 set.seed(0)
 n = 100
@@ -44,6 +45,17 @@ if (r > 0) {ids = c(ids, sample(K,r))}
 ids
 }
 ```
+Investigate the effect of the high dimensionality of features (p) on the out-of-sample misclassification rate
+when variable prescreening is allowed to “see” the entire data. Perform the experiment below and briefly
+discuss your results.
+
+For each feature, perform a two-sample t-test of the equality of the means
+(H0 : µ0 = µ1); keep at most p∗ features that have the lowest p-values under 0.05 (use p∗ = 5, 10, 20 and
+40). I.e., if nt tests reject the null hypothesis (that the means are equal) at the level of significance 0.05,
+use p∗ ≤ nt features with the lowest p-values. If p∗ > nt, then use all nt features with p-values under 0.05.
+Report in a table the average ten-fold CV misclassification rate for a logistic regression classifier (with the
+intercept and linear terms only); the table columns should correspond to the values of p∗ and rows - to the
+values of i (equivalently, p). Briefly discuss your findings.
 
 ```{R}
 # Generate data
@@ -55,6 +67,11 @@ Y = c(rep(1,25),rep(0,25))
 ```
 
 # Problem 3
+Revise your solution to Problem 2 in order to correctly apply cross-validation in order to estimate the
+misclassification error rate. Specifically, carry out prescreening for every training fold separately.
+The rest of the setup (10-fold CV) and the statistical test for prescreening should be the same.
+Report your results as a table (with the same layout as in Problem 2) for the same logistic regression
+classifier and briefly discuss your findings
 ```{R}
 ```
 
@@ -69,6 +86,15 @@ Y = c(rep(1,25),rep(0,25))
 
 # Problem 4
 ```{R}
+genData <- function(n, seed=0) {
+set.seed(seed)
+x = seq(-1,1,length.out=n)
+y = x - x^2 + 2*rnorm(n) # true sigma = 2;
+out.df = data.frame(x=x, y=y)
+out.df
+}
+train.df = genData(n=200,seed=100)
+test.df = genData(400)
 ```
 
 ```{R}
@@ -79,10 +105,91 @@ Y = c(rep(1,25),rep(0,25))
 
 # Problem 5
 ```{R}
-```
+# assume values for x and cfp
+# x = 0.25
+cfp=1
+n=100
 
-```{R}
+
+x_vec=c()
+A_vec=c()
+C_vec=c()
+R_vec=c()
+FPR_vec=c()
+TPR_vec=c()
+G_vec=c()
+for (x in seq(0.01,0.99,0.01)) {
+  A=c(0.5, 0.2)
+  C=c(cfp, 10*cfp)
+  R=c(x, sqrt(x))
+  
+  Ai=0
+  for(q in A){
+    Ai = Ai+1
+    P=n*q
+    N=n*(1-q)
+    
+    Ri=0
+    for(tpr in R){
+      Ri=Ri+1
+      # calculate TP, FP, TN, and FN with regards to x
+      TP = tpr*P
+      FN = P-TP
+      FP = x*N
+      TN = N-FP
+      FPR = x
+      TPR = tpr
+      
+      Ci=0
+      for(cfn in C){
+        Ci=Ci+1
+        G = cfn*FN + cfp*FP
+        
+        x_vec=c(x_vec,x)
+        A_vec=c(A_vec,Ai)
+        C_vec=c(C_vec,Ci)
+        R_vec=c(R_vec,Ri)
+        FPR_vec=c(FPR_vec,FPR)
+        TPR_vec=c(TPR_vec,TPR)
+        G_vec=c(G_vec,G)
+        
+        # print(paste("(A:",as.character(Ai),")"))
+        # print(paste("(C:",as.character(Ci),")"))
+        # print(paste("(R:",as.character(Ri),")"))
+        # print(paste("FPR = ", FPR))
+        # print(paste("TPR = ", TPR))
+        # print(paste("G = ", G))
+        # print("----------------------------")
+        
+        
+      }
+    }
+    
+  }
+}
+
+results_df = data.frame(x_vec, 
+                          A_vec,
+                          C_vec,
+                          R_vec, 
+                          FPR_vec,
+                          TPR_vec,
+                          G_vec)
+
+results_df$design_id <- paste(results_df$A_vec,
+                              results_df$C_vec, 
+                              results_df$R_vec)
+
+# Objective function score visualization
+plot(x=results_df$x_vec, 
+     y=results_df$G_vec, 
+     col=factor(results_df$design_id),
+     ylab="G (misclassification cost)",
+     xlab="x (FPR)")
+
 ```
+The best classifier is the one that minimizes the objective function the best over values of x. In this case it was one with the design combinations of (A:1 C1: R:2) or (A:2 C1: R:2) .For higher values of x an unbalanced population gives higher values from the objective function. A1 is thus better with even populations. This is because a higher value of x means that the derived False positive count was increased. This in turn increased the mis-clssifications calculated in the objective function. All classifiers that had a cfn that was 10 times the cfp resulted in an objective function that was orders of magnitude larger than the other classifiers. This makes intuitive senses as it dramatically increases the net cost of mis-classifications. With a TPR that is square rooted the objective function consistently returns a lower mis-classifications score. R2 is thus better. This is because, when the square root of the TPR is used to derive True positives they are higher than than when the TPR is not sqaure rooted. This in turn decreases the amount of mis-classifications. 
+
 
 ```{R}
 ```
