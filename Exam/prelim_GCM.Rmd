@@ -5,6 +5,9 @@ output: pdf_document
 fontsize: 11pt
 geometry: margin=2cm
 ---
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
 ### Helping functions
 ```{R}
 myRound <- function(x, acc=3) {mult = 10^acc; round(x*mult)/mult}
@@ -62,7 +65,10 @@ column_t_test <- function(features, target){
 top_features <- function(pval_lst, p_val, p_min){
   bool_lst = lapply(seq(1,length(pval_lst)),function(x){pval_lst[[x]] < p_val})
   if(sum(as.integer(bool_lst))<=p_min){
-    return(bool_lst)
+    bool_df=data.frame(pval_sig=matrix(unlist(bool_lst), nrow=length(bool_lst), byrow=TRUE))
+    selected_df = bool_df[bool_df$pval_sig==TRUE,]
+    feat_index_vec = as.numeric(rownames(selected_df))
+    return(feat_index_vec)
   }else{
     pval_df = t(data.frame(pval_lst))
     row.names(pval_df) <- NULL
@@ -93,45 +99,58 @@ MCR <- function(true_vals, pred_probs, threshold=0.5){
 
 ```{R}
 # Generate data
-set.seed(0)
-n = 25
-nr = n*2
-Y = c(rep(1,n),rep(0,n))
-k=10
-p_star_vec = c(5,10,20,40)
-i_vec = seq(5)
-mcr_i_pstar_df = data.frame(matrix(0, nrow = length(p_star_vec), ncol = length(i_vec)+1))
-mcr_i_pstar_df[,1] = p_star_vec
+set.seed(0) # set seed
+n = 25 # number of samples in each class
+nr = n*2 # total number of samples
+Y = c(rep(1,n),rep(0,n)) # target values
+k=10 # k value for cross validation
+p_star_vec = c(5,10,20,40) # p* values to select the top features in the data
+i_vec = seq(5) #different values of i for different sized data sets
 
+# create matrix where results will be stored
+mcr_i_pstar_df = data.frame(matrix(0, 
+                                   nrow = length(p_star_vec), 
+                                   ncol = length(i_vec)+1)) 
+mcr_i_pstar_df[,1] = p_star_vec # add p* values to results table
+
+# loop over values of i to make different data sets
 for(i in i_vec){
-  nc = 200*2^5 # nc = 6400
+  nc = 200*2^i # nc = 6400
   M = matrix(rnorm(nr*nc),nrow=nr)
-  X = M[,1:nc]
-  
+  X = M[,1:nc] # features of data
+  # calculate cross validation indexes
+  # this is applied only after feature selection
   ids = myCVids(n=nr, K=k, seed=0)
-  
+  # feature selection
   # apply two-sample t-test
   t_test_results = column_t_test(features=X, target=Y)
   # get all features according to p-value at differing values of p_star
-  mean_pstar_mcr_vec = c()
-  for(p_star in p_star_vec){
-    feat_index_vec = c(top_features(pval_lst=t_test_results[[2]], p_val=0.05, p_min=p_star))
+  # create vector to store mean mcr values for each p* subset
+  mean_pstar_mcr_vec = c() 
   
-    # assign(paste("feat_idx_vec_", p_star, sep = ""), feat_index_vec)
+  # loop over p* values to create a subset of selected features
+  for(p_star in p_star_vec){
+    feat_index_vec = c(top_features(pval_lst=t_test_results[[2]],
+                                    p_val=0.05, 
+                                    p_min=p_star))
     X_pstar = X[,feat_index_vec]
-    
-    k_mcr_vec = c()
+    k_mcr_vec = c() # store all mcr values for each k
+    # loop over k to calculate the MCR for each fold
     for( k in seq(k)){
       isk = (ids == k) # k varies from 1 to K
-      valid.k = which(isk)
-      train.k = which(!isk)
+      valid.k = which(isk) # test data index
+      train.k = which(!isk) # train data index
+      # get all training data in single data frame
       train_df = data.frame(Y=Y[train.k], X_pstar[train.k,])
+      # get all testing data in single data frame
       val_df = data.frame(Y=Y[valid.k], X_pstar[valid.k,])
       
+      # train a Logistic regression model
       LR = glm(Y ~ .,
               data=train_df,
               family="binomial")
       
+      # get estimated probabilities on the test data 
       LR_probs = data.frame(
                     predict(LR,
                     val_df,
@@ -139,22 +158,28 @@ for(i in i_vec){
                     )
                   )
       
+      # use the probabilities to calculate the MCR
       mcr = MCR(
               true_vals=val_df$Y,
               pred_probs=LR_probs[,1],
               threshold=0.5)
       k_mcr_vec = c(k_mcr_vec, mcr)
     }
-    mean_pstar_mcr = mean(k_mcr_vec)
+    mean_pstar_mcr = mean(k_mcr_vec) # get the mean MCR for all values of k
 
     mean_pstar_mcr_vec = c(mean_pstar_mcr_vec, mean_pstar_mcr)
   }
   mcr_i_pstar_df[,i+1] = mean_pstar_mcr_vec
 }
-
+# add all data to a data frame and transform to be in the correct format
 mcr_i_pstar_df = t(mcr_i_pstar_df)
 rownames(mcr_i_pstar_df) = c("p*", i_vec)
-knitr::kable(mcr_i_pstar_df, format = "markdown")
+knitr::kable(mcr_i_pstar_df, format = "markdown") # display table
+
+
+
+
+
 ```
 
 
