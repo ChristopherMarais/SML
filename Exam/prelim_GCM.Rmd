@@ -49,17 +49,75 @@ ids = sample(id0,t*K)
 if (r > 0) {ids = c(ids, sample(K,r))}
 ids
 }
-```
 
-
-```{R}
 # Generate data
 set.seed(0)
 nr = 50
 nc = 200*2^5 # nc = 6400
 M = matrix(rnorm(nr*nc),nrow=50)
 Y = c(rep(1,25),rep(0,25))
+X = M[,1:nc]
+p_star_vec = c(5,10,20,40)
 ```
+
+
+```{R}
+# two-sample t test
+column_t_test <- function(features, target){
+  tests = lapply(seq(1,ncol(features)),function(x){t.test(features[,x]~target)})
+  pval_lst = lapply(seq(1,length(tests)),function(x){tests[[x]]$p.value})
+  return(list(tests, pval_lst))
+}
+
+
+# keep features with p-value <= 0.05
+top_features <- function(pval_lst, p_val, p_min){
+  bool_lst = lapply(seq(1,length(pval_lst)),function(x){pval_lst[[x]] < p_val})
+  if(sum(as.integer(bool_lst))<=p_min){
+    return(bool_lst)
+  }else{
+    pval_df = t(data.frame(pval_lst))
+     row.names(pval_df) <- NULL
+     pval_df$pval_sig = matrix(unlist(bool_lst), nrow=length(bool_lst), byrow=TRUE)
+    
+  }
+  return(bool_lst)
+  
+}
+
+t_test_results = column_t_test(features=X, target=Y)
+feat_out = top_features(pval_lst=t_test_results[[2]], p_val=0.05, p_min=10)
+
+bool_mat = matrix(unlist(feat_out), nrow=length(feat_out), byrow=TRUE)
+
+# a = data.frame(sort(t(data.frame(bool_vec)), decreasing = TRUE, index.return=TRUE))
+# as.logical(TRUE * TRUE)
+
+
+# 10-fold CV
+# logistic regression
+
+```
+
+```{R}
+bool_t
+
+bool_vec
+
+```
+
+```{R}
+
+
+```
+
+```{R}
+```
+
+```{R}
+b = sort(a)
+```
+
 
 # Problem 3
 ```{R}
