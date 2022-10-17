@@ -139,7 +139,7 @@ for(i in i_vec){
                                     p_min=p_star))
     
     X_pstar = X[,feat_index_vec]
-    k_mcr_vec = c() # store all mcr values for each k
+    k_mcr_vec = c() # store all MCR values for each k
 
     # loop over k to calculate the MCR for each fold
     for( k in seq(k)){
@@ -277,17 +277,22 @@ rownames(mcr_i_pstar_df) = c("p*", i_vec)
 knitr::kable(mcr_i_pstar_df, format = "markdown") # display table
 ```
 Note: it takes much longer this way... like waayyy longer more data = worse generalization with problem 2 but not 3.
-```{R}
-```
-
-```{R}
-```
-
-```{R}
-```
 
 # Problem 4
 ```{R}
+# functions
+myCVids <- function(n, K, seed=0) {
+# balanced subsets generation (subset sizes differ by at most 1)
+# n is the number of observations/rows in the training set
+# K is the desired number of folds (e.g., 5 or 10)
+set.seed(seed);
+t = floor(n/K); r = n-t*K;
+id0 = rep((1:K),times=t)
+ids = sample(id0,t*K)
+if (r > 0) {ids = c(ids, sample(K,r))}
+ids
+}
+
 genData <- function(n, seed=0) {
 set.seed(seed)
 x = seq(-1,1,length.out=n)
@@ -295,15 +300,95 @@ y = x - x^2 + 2*rnorm(n) # true sigma = 2;
 out.df = data.frame(x=x, y=y)
 out.df
 }
+```
+
+
+## 4.1
+```{R}
+# parameters
+set.seed(100)
+d_vec = seq(0,4)
+# generate data
 train.df = genData(n=200,seed=100)
 test.df = genData(400)
+# create k-fold indexes
+k=5
+inds.part = myCVids(n=nrow(train.df),K=k)
+# create a data frame to save results into
+M = data.frame(matrix(0, 
+                     nrow = (length(d_vec)), 
+                     ncol = k+1)) 
+M[,1] = d_vec # add p* values to results table
+colnames(M) = c("d", seq(k))
+
+# loop over k-folds
+for( k in seq(k)){
+  isk = (inds.part == k) # k varies from 1 to K
+  valid.k = which(isk) # test data index
+  train.k = which(!isk)
+  # split data 
+  train_sub_df = train.df[train.k,]
+  valid_df = train.df[valid.k,]
+  
+  d_mse_vec = c()
+  for(d in d_vec){
+    if(d==0){
+      # train a polynomial model
+      PR = lm(y ~ 1, data=train_sub_df)
+    }else{
+     # train a polynomial model
+      PR = lm(y ~ poly(x, d, raw = TRUE), data=train_sub_df) 
+    }
+    # get predicted values to calculate MSE
+    pred_val = predict(PR, valid_df, type="response")
+    pred_true_val_df = data.frame(pred = pred_val, actual = valid_df$y)
+    #calculate MSE
+    mse = mean((pred_true_val_df$actual - pred_true_val_df$pred)^2)
+    d_mse_vec = c(d_mse_vec, mse)
+  }
+  M[,k+1] = d_mse_vec
+}
+
+# tally of MSE
+M$Total_MSE = rowSums(M)
+knitr::kable(M, format = "markdown") # display table
+# print best d value
+print(paste("The best degree is: ",as.character(M[which.min(M$Total_MSE),]$d)))
+```
+## 4.2
+```{R}
+
+```
+## 4.3
+```{R}
+
+```
+
+## 4.4
+```{R}
+
 ```
 
 ```{R}
+
 ```
 
 ```{R}
+
 ```
+
+```{R}
+
+```
+
+```{R}
+
+```
+
+```{R}
+
+```
+
 
 # Problem 5
 ```{R}
