@@ -65,7 +65,10 @@ column_t_test <- function(features, target){
 top_features <- function(pval_lst, p_val, p_min){
   bool_lst = lapply(seq(1,length(pval_lst)),function(x){pval_lst[[x]] < p_val})
   if(sum(as.integer(bool_lst))<=p_min){
+    pval_df = t(data.frame(pval_lst))
+    row.names(pval_df) <- NULL
     bool_df=data.frame(pval_sig=matrix(unlist(bool_lst), nrow=length(bool_lst), byrow=TRUE))
+    bool_df$p_val <- pval_df[,1]
     selected_df = bool_df[bool_df$pval_sig==TRUE,]
     feat_index_vec = as.numeric(rownames(selected_df))
     return(feat_index_vec)
@@ -80,8 +83,9 @@ top_features <- function(pval_lst, p_val, p_min){
     bool_df$p_select = as.logical(bool_df$pval_sig*bool_df$p_top)
     selected_df = bool_df[bool_df$p_select==TRUE,]
     feat_index_vec = as.numeric(rownames(selected_df))
+    return(feat_index_vec)
   }
-  return(feat_index_vec)
+  
   
 }
 
@@ -133,8 +137,10 @@ for(i in i_vec){
     feat_index_vec = c(top_features(pval_lst=t_test_results[[2]],
                                     p_val=0.05, 
                                     p_min=p_star))
+    
     X_pstar = X[,feat_index_vec]
     k_mcr_vec = c() # store all mcr values for each k
+
     # loop over k to calculate the MCR for each fold
     for( k in seq(k)){
       isk = (ids == k) # k varies from 1 to K
@@ -163,6 +169,7 @@ for(i in i_vec){
               true_vals=val_df$Y,
               pred_probs=LR_probs[,1],
               threshold=0.5)
+      
       k_mcr_vec = c(k_mcr_vec, mcr)
     }
     mean_pstar_mcr = mean(k_mcr_vec) # get the mean MCR for all values of k
@@ -175,10 +182,6 @@ for(i in i_vec){
 mcr_i_pstar_df = t(mcr_i_pstar_df)
 rownames(mcr_i_pstar_df) = c("p*", i_vec)
 knitr::kable(mcr_i_pstar_df, format = "markdown") # display table
-
-
-
-
 
 ```
 
