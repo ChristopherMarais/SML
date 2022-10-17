@@ -50,18 +50,6 @@ if (r > 0) {ids = c(ids, sample(K,r))}
 ids
 }
 
-# Generate data
-set.seed(0)
-nr = 50
-nc = 200*2^5 # nc = 6400
-M = matrix(rnorm(nr*nc),nrow=50)
-Y = c(rep(1,25),rep(0,25))
-X = M[,1:nc]
-p_star_vec = c(5,10,20,40)
-```
-
-
-```{R}
 # two-sample t test
 column_t_test <- function(features, target){
   tests = lapply(seq(1,ncol(features)),function(x){t.test(features[,x]~target)})
@@ -77,33 +65,79 @@ top_features <- function(pval_lst, p_val, p_min){
     return(bool_lst)
   }else{
     pval_df = t(data.frame(pval_lst))
-     row.names(pval_df) <- NULL
-     pval_df$pval_sig = matrix(unlist(bool_lst), nrow=length(bool_lst), byrow=TRUE)
-    
+    row.names(pval_df) <- NULL
+    bool_df=data.frame(pval_sig=matrix(unlist(bool_lst), nrow=length(bool_lst), byrow=TRUE))
+    bool_df$p_val <- pval_df[,1]
+    bool_df$p_top = FALSE
+    sorted_res = sort(bool_df$p_val, index.return=TRUE)
+    bool_df[head(sorted_res$ix,p_min),]$p_top = TRUE
+    bool_df$p_select = as.logical(bool_df$pval_sig*bool_df$p_top)
+    selected_df = bool_df[bool_df$p_select==TRUE,]
+    feat_index_vec = as.numeric(rownames(selected_df))
   }
-  return(bool_lst)
+  return(feat_index_vec)
   
 }
 
+MCR <- function(pred, target){
+  data_length = length(target)
+  correct_classification = (target==pred)
+  mcr = (data_length-sum(correct_classification))/data_length
+  return(mcr)
+}
+```
+
+```{R}
+
+```
+
+
+```{R}
+# Generate data
+set.seed(0)
+n = 25
+nr = n*2
+i = seq(5)
+# FOR LOOP HERE AND GENERATE OUTPUT FOR EACH I
+
+nc = 200*2^5 # nc = 6400
+M = matrix(rnorm(nr*nc),nrow=nr)
+Y = c(rep(1,n),rep(0,n))
+X = M[,1:nc]
+p_star_vec = c(5,10,20,40)
+
+# apply two-sample t-test
 t_test_results = column_t_test(features=X, target=Y)
-feat_out = top_features(pval_lst=t_test_results[[2]], p_val=0.05, p_min=10)
+# get all features according to p-value at differing values of p_star
+for(p_star in p_star_vec){
+  feat_index_vec = c(top_features(pval_lst=t_test_results[[2]], p_val=0.05, p_min=p_star))
+  assign(paste("feat_idx_vec_", p_star, sep = ""), feat_index_vec)
+}
 
-bool_mat = matrix(unlist(feat_out), nrow=length(feat_out), byrow=TRUE)
+# create data set for each top selection
+X_pstar_5 = X[,feat_idx_vec_5]
+X_pstar_10 = X[,feat_idx_vec_10]
+X_pstar_20 = X[,feat_idx_vec_20]
+X_pstar_40 = X[,feat_idx_vec_40]
 
-# a = data.frame(sort(t(data.frame(bool_vec)), decreasing = TRUE, index.return=TRUE))
-# as.logical(TRUE * TRUE)
+# Apply 10-fold CV to each data set
+ids = myCVids(n=nr, K=10, seed=0)
+k = 1
+#FOR LOOP THROUGH K HERE
+isk = (ids == k) # k varies from 1 to K
+valid.k = which(isk)
+train.k = which(!isk)
 
+# train classifier
 
-# 10-fold CV
-# logistic regression
+# Calculate mis-classification rate
+# END FOR LOOP HERE AND AVERAGRE MCR
+
+# RECORD DATA ANAD SAVE OUTSIDE OF FOR LOOP
 
 ```
 
 ```{R}
-bool_t
-
-bool_vec
-
 ```
 
 ```{R}
