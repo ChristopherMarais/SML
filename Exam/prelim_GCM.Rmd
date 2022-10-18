@@ -187,7 +187,7 @@ samp_var = var(var_vec)
 print(paste("The sample mean is (A): ", myRound(samp_mean)))
 print(paste("The sample variance is (A): ", myRound(samp_var)))
 hist(var_vec,
-     ylim=c(0,500),
+     ylim=c(0,550),
      # breaks=20,
      xlim=c(0,30),
      main="Histogram of sample variances (A)")
@@ -205,7 +205,7 @@ B_samp_var = var(B_var_vec)
 print(paste("The sample mean is (B): ", myRound(B_samp_mean)))
 print(paste("The sample variance is (B): ", myRound(B_samp_var)))
 hist(B_var_vec,
-     ylim=c(0,500),
+     ylim=c(0,550),
      # breaks=20,
      xlim=c(0,30),
      main="Histogram of the estimated sample variances (B)")
@@ -220,7 +220,7 @@ C_samp_var = var(C_var_vec)
 print(paste("The sample mean is (C): ", myRound(C_samp_mean)))
 print(paste("The sample variance is (C): ", myRound(C_samp_var)))
 hist(C_var_vec,
-     ylim=c(0,500),
+     ylim=c(0,550),
      # breaks=20,
      xlim=c(0,30),
      main="Histogram of the estimated sample variances (C)")
