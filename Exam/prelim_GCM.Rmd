@@ -860,7 +860,7 @@ loocv_mean_vec = apply(LOOCV_df[, 2:(ncol(LOOCV_df)-1)], 1, mean)
      col='red',
      pch = 16,
      lwd=3,
-     ylim=c(3,4.2))
+     ylim=c(3,4.5))
 lines(x=LOOCV_df$Degree,
      y=loocv_mean_vec,
      type='b',
@@ -884,7 +884,7 @@ abline(v=LOOCV_df[which.min(LOOCV_df$Total_MSE),]$Degree,
      lty=3,
      lwd=3)
 legend("topright",
-       inset = 0.05, 
+       inset = 0.01, 
        legend = c("Training LOOCV MSE", "Training K-fold CV MSE", "LOOCV best d", "K-fold CV best d", "Test data MSE (No CV)"),
        lty = c(1,1,3,3),
        col = c("blue", "red","blue", "red", "black"),
@@ -1049,7 +1049,7 @@ abline(v=LOOCV_df[which.min(LOOCV_df$Total_MSE),]$Degree,
      lty=3,
      lwd=3)
 legend("topright",
-       inset = 0.05, 
+       inset = 0.01, 
        legend = c("Training LOOCV MSE", "Training K-fold CV MSE", "LOOCV best d", "K-fold CV best d", "Test data MSE (No CV)"),
        lty = c(1,1,3,3),
        col = c("blue", "red","blue", "red", "black"),
@@ -1134,12 +1134,19 @@ results_df$design_id <- paste(results_df$A_vec,
                               results_df$R_vec)
 
 # Objective function score visualization
-plot(x=results_df$x_vec, 
+{plot(x=results_df$x_vec, 
      y=results_df$G_vec, 
      col=factor(results_df$design_id),
      ylab="G (misclassification cost)",
-     xlab="x (FPR)")
+     xlab="x (FPR)",
+     pch=20)
+legend("topright",
+     inset = 0.01,
+     pch=c(19,19,19,19),
+     legend = c("A1:C2:R1", "A1:C2:R2", "A2:C2:R1", "A2:C2:R2", "A1:C1:R1", "A1:C1:R2", "A2:C1:R1", "A2:C1:R2"),
+     col = c("green", "blue","yellow", "grey", "black","red", "cyan", "purple"))}
 
+knitr::kable(results_df, format = "markdown")
 ```
 The best classifier is the one that minimizes the objective function the best over values of x. In this case it was one with the design combinations of (A:1 C1: R:2) or (A:2 C1: R:2). For higher values of x an unbalanced population gives higher values from the objective function. A1 is thus better with even populations when. This is because with an uneven class ratio the mis-classification rate increases for higher values of x because a higher x value means a higher false positive count. Even when the false negative count is low. THis classifier is therefore not stable for all values of x and we choose the (A:1 C1: R:2) combination over the (A:2 C1: R:2) combination. Even though the (A:2 C1: R:2) combination clearly performs better at lower values of x. This in turn increased the mis-classifications calculated in the objective function. All classifiers that had a cfn that was 10 times the cfp resulted in an objective function that was orders of magnitude larger than the other classifiers. This makes intuitive senses as it dramatically increases the net cost of mis-classifications. With a TPR that is square rooted the objective function consistently returns a lower mis-classifications score. R2 is thus better. This is because, when the square root of the TPR is used to derive True positives they are higher than than when the TPR is not square rooted. This in turn decreases the amount of mis-classifications. 
 
