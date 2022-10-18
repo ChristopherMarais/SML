@@ -407,57 +407,47 @@ There is a part in lectures where it says that LOOCV is the same as k-fold for p
 ## 4.3
 ```{R}
 # visualize LOOCV and K-fold CV
-# plot k-fold
-# calculate max and min limits of data
-kfold_max_vec = apply(KFOLD_df[, 2:6], 1, max)
-kfold_min_vec = apply(KFOLD_df[, 2:6], 1, min)
-kfold_mean_vec = apply(KFOLD_df[, 2:6], 1, mean)
+# calculate max and min limits of data KFOLD
+kfold_max_vec = apply(KFOLD_df[, 2:(ncol(KFOLD_df)-1)], 1, max)
+kfold_min_vec = apply(KFOLD_df[, 2:(ncol(KFOLD_df)-1)], 1, min)
+kfold_mean_vec = apply(KFOLD_df[, 2:(ncol(KFOLD_df)-1)], 1, mean)
+# calculate max and min limits of data for LOOCV
+loocv_max_vec = apply(LOOCV_df[, 2:(ncol(LOOCV_df)-1)], 1, max)
+loocv_min_vec = apply(LOOCV_df[, 2:(ncol(LOOCV_df)-1)], 1, min)
+loocv_mean_vec = apply(LOOCV_df[, 2:(ncol(LOOCV_df)-1)], 1, mean)
+
 {plot(x=KFOLD_df$Degree, 
      y=kfold_mean_vec,
      ylab="Mean Squared Error",
-     main="5-fold CV",
+     main="Mean MSE from CV",
      xlab="Degree of Polynomial",
      type='b',
      col='red',
      pch = 16,
      lwd=3,
-     ylim=c(min(KFOLD_df[2:6]),max(KFOLD_df[2:6])))
-lines(x=KFOLD_df$Degree,
-     y=kfold_max_vec,
-     col="red",
-     lty=3,
-     lwd=3)
-lines(x=KFOLD_df$Degree,
-     y=kfold_min_vec,
-     col="red",
-     lty=3,
-     lwd=3)}
-
-# plot LOOCV
-# calculate max and min limits of data
-loocv_max_vec = apply(LOOCV_df[, 2:201], 1, max)
-loocv_min_vec = apply(LOOCV_df[, 2:201], 1, min)
-loocv_mean_vec = apply(LOOCV_df[, 2:201], 1, mean)
-{plot(x=LOOCV_df$Degree,
+     ylim=c(3.5,4.5))
+lines(x=LOOCV_df$Degree,
      y=loocv_mean_vec,
-     ylab="Mean Squared Error",
-     main="LOOCV",
-     xlab="Degree of Polynomial",
      type='b',
      col='blue',
      pch = 16,
-     lwd=3,
-     ylim=c(min(LOOCV_df[,2:201]),max(LOOCV_df[,2:201])))
-lines(x=LOOCV_df$Degree,
-     y=loocv_max_vec,
-     col="blue",
+     lwd=3)
+abline(v=KFOLD_df[which.min(KFOLD_df$Total_MSE),]$Degree,
+     col='red',
+     pch = 16,
      lty=3,
      lwd=3)
-lines(x=LOOCV_df$Degree,
-     y=loocv_min_vec,
-     col="blue",
+abline(v=LOOCV_df[which.min(LOOCV_df$Total_MSE),]$Degree,
+     col='blue',
+     pch = 16,
      lty=3,
-     lwd=3)}
+     lwd=3)
+legend("right",
+       inset = 0.05, 
+       legend = c("Training LOOCV MSE", "Training K-fold CV MSE", "LOOCV best d", "K-fold CV best d"),
+       lty = c(1,1,3,3),
+       col = c("blue", "red","blue", "red"),
+       lwd = 2)}
 ```
 
 ## 4.4
@@ -558,11 +548,11 @@ print(paste("The best LOOCV degree is: ",
             as.character(LOOCV_df[which.min(LOOCV_df$Total_MSE),]$Degree)))
 
 # visualize LOOCV and K-fold CV
-# plot k-fold
-# calculate max and min limits of data
-kfold_max_vec = apply(KFOLD_df[, 2:6], 1, max)
-kfold_min_vec = apply(KFOLD_df[, 2:6], 1, min)
-kfold_mean_vec = apply(KFOLD_df[, 2:6], 1, mean)
+# calculate max and min limits of data KFOLD
+kfold_mean_vec = apply(KFOLD_df[, 2:(ncol(KFOLD_df)-1)], 1, mean)
+# calculate max and min limits of data for LOOCV
+loocv_mean_vec = apply(LOOCV_df[, 2:(ncol(LOOCV_df)-1)], 1, mean)
+
 {plot(x=KFOLD_df$Degree, 
      y=kfold_mean_vec,
      ylab="Mean Squared Error",
@@ -572,43 +562,29 @@ kfold_mean_vec = apply(KFOLD_df[, 2:6], 1, mean)
      col='red',
      pch = 16,
      lwd=3,
-     ylim=c(min(KFOLD_df[2:6]),max(KFOLD_df[2:6])))
-lines(x=KFOLD_df$Degree,
-     y=kfold_max_vec,
-     col="red",
-     lty=3,
-     lwd=3)
-lines(x=KFOLD_df$Degree,
-     y=kfold_min_vec,
-     col="red",
-     lty=3,
-     lwd=3)}
-
-# plot LOOCV
-# calculate max and min limits of data
-loocv_max_vec = apply(LOOCV_df[,2:401], 1, max)
-loocv_min_vec = apply(LOOCV_df[,2:401], 1, min)
-loocv_mean_vec = apply(LOOCV_df[,2:401], 1, mean)
-{plot(x=LOOCV_df$Degree,
+     ylim=c(3.5,4.5))
+lines(x=LOOCV_df$Degree,
      y=loocv_mean_vec,
-     ylab="Mean Squared Error",
-     main="LOOCV",
-     xlab="Degree of Polynomial",
      type='b',
      col='blue',
      pch = 16,
-     lwd=3,
-     ylim=c(min(LOOCV_df[2:401]),max(LOOCV_df[2:401])))
-lines(x=LOOCV_df$Degree,
-     y=loocv_max_vec,
-     col="blue",
+     lwd=3)
+abline(v=KFOLD_df[which.min(KFOLD_df$Total_MSE),]$Degree,
+     col='red',
+     pch = 16,
      lty=3,
      lwd=3)
-lines(x=LOOCV_df$Degree,
-     y=loocv_min_vec,
-     col="blue",
+abline(v=LOOCV_df[which.min(LOOCV_df$Total_MSE),]$Degree,
+     col='blue',
+     pch = 16,
      lty=3,
-     lwd=3)}
+     lwd=3)
+legend("right",
+       inset = 0.05, 
+       legend = c("LOOCV", "K-fold CV", "LOOCV best d", "K-fold CV best d"),
+       lty = c(1,1,3,3),
+       col = c("blue", "red","blue", "red"),
+       lwd = 2)}
 ```
 
 # Problem 5
