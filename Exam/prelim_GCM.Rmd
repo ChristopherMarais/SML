@@ -15,57 +15,144 @@ myRound <- function(x, acc=3) {mult = 10^acc; round(x*mult)/mult}
 
 # Problem 1
 
-```{R}
-set.seed(0)
-n = 100
-m=1000
-```
-
-
-### Player A
+### Case 1
 ```{R}
 # Case 1
+n = 100
+m=1000
+set.seed(0)
 origData = rnorm(n) # case 1
-# sample new data
+
+
+# a) Player A
+# generate 1000 data sets
+set.seed(0)
 z = rnorm(n*m)
 mat = matrix(z,nrow=m)
-
-# a) 
 #calculate variance for each row
 var_vec = apply(mat,1,var) 
 samp_mean = mean(var_vec)
 samp_var = var(var_vec)
-print(paste("The sample mean of the sample of variances is: ", myRound(samp_mean)))
-print(paste("The sample variance of the sample of variances is: ", myRound(samp_var)))
+print(paste("The sample mean is (A): ", myRound(samp_mean)))
+print(paste("The sample variance is (A): ", myRound(samp_var)))
+hist(var_vec,
+     ylim=c(0,200),
+     breaks=20,
+     xlim=c(0,2),
+     main="Histogram of sample variances (A)")
 
-# b) 
+# b) Player B
 # Estimate mean and variance from the sample data
-E_var = var(mat)
-E_mean = mean(mat)
+B_var = var(origData)
+B_mean = mean(origData)
 # simulate new data with 
+set.seed(0)
+B_mat = matrix(rnorm(n*m, mean = B_mean, sd = sqrt(B_var)),nrow=m)
+B_var_vec = apply(B_mat,1,var) 
+B_samp_mean = mean(B_var_vec)
+B_samp_var = var(B_var_vec)
+print(paste("The sample mean is (B): ", myRound(B_samp_mean)))
+print(paste("The sample variance is (B): ", myRound(B_samp_var)))
+hist(B_var_vec,
+     ylim=c(0,200),
+     breaks=20,
+     xlim=c(0,2),
+     main="Histogram of the estimated sample variances (B)")
+
+# c) Player C
+# sample new data
+z=sample(x=origData, size=n*m, replace=TRUE)
+C_mat = matrix(z,nrow=m)
+C_var_vec = apply(C_mat,1,var) 
+C_samp_mean = mean(C_var_vec)
+C_samp_var = var(C_var_vec)
+print(paste("The sample mean is (C): ", myRound(C_samp_mean)))
+print(paste("The sample variance is (C): ", myRound(C_samp_var)))
+hist(C_var_vec,
+     ylim=c(0,200),
+     breaks=20,
+     xlim=c(0,2),
+     main="Histogram of the estimated sample variances (C)")
+```
+
+```{R}
+# e)
+n_vec=c(10, 25, 50, 100, 200, 400)
+m=1000
+set.seed(0)
+data400 = rnorm(400)
+
+par(mfrow=c(6,3),mar=c(2,2,2,2))
+for(n in n_vec){
+  #Monte Carlo
+  set.seed(0)
+  z = rnorm(n*m)
+  mat = matrix(z,nrow=m)
+  var_vec = apply(mat,1,var) 
+  samp_mean = mean(var_vec)
+  samp_var = var(var_vec)
+  print(paste("The Monte Carlo mean is ", "(n=",n,"): ", myRound(samp_mean)))
+  print(paste("The Monte Carlo variance is ", "(n=",n,"): ",  myRound(samp_var)))
+  hist(var_vec,
+       ylim=c(0,200),
+       breaks=20,
+       xlim=c(0,2),
+       main=paste("Monte Carlo ", 
+                  "(n=",n,")"))
+  
+  # Parametric
+  # Estimate mean and variance from the sample data
+  z = data400[1:n]
+  B_var = var(z)
+  B_mean = mean(z)
+  # simulate new data with 
+  set.seed(0)
+  B_mat = matrix(rnorm(n*m, mean = B_mean, sd = sqrt(B_var)),nrow=m)
+  B_var_vec = apply(B_mat,1,var) 
+  B_samp_mean = mean(B_var_vec)
+  B_samp_var = var(B_var_vec)
+  print(paste("The Parametric mean is ", "(n=",n,"): ", myRound(B_samp_mean)))
+  print(paste("The Parametric variance is ", "(n=",n,"): ", myRound(B_samp_var)))
+  hist(B_var_vec,
+       ylim=c(0,200),
+       breaks=20,
+       xlim=c(0,2),
+       main=paste("Parametric ", 
+                  "(n=",n,")"))
+  
+  # c) Player C
+  # sample new data
+  z=sample(x=data400[1:n], size=n*m, replace=TRUE)
+  C_mat = matrix(z,nrow=m)
+  C_var_vec = apply(C_mat,1,var) 
+  C_samp_mean = mean(C_var_vec)
+  C_samp_var = var(C_var_vec)
+  print(paste("The Non-Parametric mean is ", "(n=",n,"): ", myRound(C_samp_mean)))
+  print(paste("The Non-Parametric variance is ", "(n=",n,"): ", myRound(C_samp_var)))
+  hist(C_var_vec,
+       ylim=c(0,200),
+       breaks=20,
+       xlim=c(0,2),
+       main=paste("Non-Parametric ", 
+                  "(n=",n,")"))
+}
+
+```
+(d) Carefully discuss your findings; specifically, accuracy (bias and variance) and merits/drawbacks of
+parametric vs nonparametric bootstrap. You can treat the results of the Monte Carlo-based inference
+(under simulation from the true distribution) as the golden standard, against which the parametric
+and nonparametric bootstrap results are compared.
 
 
-
+### Case 2
+```{R}
 # origData = rt(n,df=3); # case 2
-# origData = rt(n,df=25); # case 3
 
 ```
 
-### Player B
+### Case 3
 ```{R}
-# origData = rnorm(n) # case 1
-# origData = rt(n,df=3); # case 2
 # origData = rt(n,df=25); # case 3
-
-
-```
-
-### Player C
-```{R}
-# origData = rnorm(n) # case 1
-# origData = rt(n,df=3); # case 2
-# origData = rt(n,df=25); # case 3
-# z=sample(x=origData, size=n*m, replace=TRUE)
 
 ```
 
