@@ -198,9 +198,9 @@ p_star_vec = c(5,10,20,40) # p* values to select the top features in the data
 i_vec = seq(5) #different values of i for different sized data sets
 
 # create matrix where results will be stored
-mcr_i_pstar_df = data.frame(matrix(0, 
-                                   nrow = length(p_star_vec), 
-                                   ncol = length(i_vec)+1)) 
+mcr_i_pstar_df = data.frame(matrix(0,
+                                   nrow = length(p_star_vec),
+                                   ncol = length(i_vec)+1))
 mcr_i_pstar_df[,1] = p_star_vec # add p* values to results table
 progress=0
 # loop over values of i to make different data sets
@@ -214,12 +214,12 @@ for(i in i_vec){
 
   # get all features according to p-value at differing values of p_star
   # create vector to store mean mcr values for each p* subset
-  mean_pstar_mcr_vec = c() 
-  
+  mean_pstar_mcr_vec = c()
+
   # loop over p* values to create a subset of selected features
   for(p_star in p_star_vec){
     k_mcr_vec = c() # store all mcr values for each k
-    
+
     # k-fold cross validation
     # loop over k to calculate the MCR for each fold
     for( k in seq(k)){
@@ -228,41 +228,41 @@ for(i in i_vec){
       isk = (ids == k) # k varies from 1 to K
       valid.k = which(isk) # test data index
       train.k = which(!isk) # train data index
-      
-      
+
+
       # feature selection
       # apply two-sample t-test
       t_test_results = column_t_test(features=X[train.k,], target=Y[train.k])
       feat_index_vec = c(top_features(pval_lst=t_test_results[[2]],
-                                p_val=0.05, 
+                                p_val=0.05,
                                 p_min=p_star))
       X_pstar = X[,feat_index_vec]
-      
-      
+
+
       # get all training data in single data frame
       train_df = data.frame(Y=Y[train.k], X_pstar[train.k,])
       # get all testing data in single data frame
       val_df = data.frame(Y=Y[valid.k], X_pstar[valid.k,])
-      
+
       # train a Logistic regression model
       LR = glm(Y ~ .,
               data=train_df,
               family="binomial")
-      
-      # get estimated probabilities on the test data 
+
+      # get estimated probabilities on the test data
       LR_probs = data.frame(
                     predict(LR,
                     val_df,
                     type ="response"
                     )
                   )
-      
+
       # use the probabilities to calculate the MCR
       mcr = MCR(
               true_vals=val_df$Y,
               pred_probs=LR_probs[,1],
               threshold=0.5)
-      
+
       k_mcr_vec = c(k_mcr_vec, mcr)
     }
     mean_pstar_mcr = mean(k_mcr_vec) # get the mean MCR for all values of k
@@ -311,15 +311,15 @@ d_vec = seq(0,4)
 # generate data
 train.df = genData(n=200,seed=100)
 test.df = genData(400)
+
 # create k-fold indexes
 k=5
 inds.part = myCVids(n=nrow(train.df),K=k)
 # create a data frame to save results into
-M = data.frame(matrix(0, 
-                     nrow = (length(d_vec)), 
-                     ncol = k+1)) 
-M[,1] = d_vec # add p* values to results table
-colnames(M) = c("d", seq(k))
+M = matrix(0, nrow = (length(d_vec)), ncol = k+1)
+KFOLD_df = data.frame(M) 
+KFOLD_df[,1] = d_vec # add degrees to results table
+colnames(KFOLD_df) = c("Degree", seq(k))
 
 # loop over k-folds
 for( k in seq(k)){
@@ -346,49 +346,270 @@ for( k in seq(k)){
     mse = mean((pred_true_val_df$actual - pred_true_val_df$pred)^2)
     d_mse_vec = c(d_mse_vec, mse)
   }
-  M[,k+1] = d_mse_vec
+  KFOLD_df[,k+1] = d_mse_vec
 }
 
 # tally of MSE
-M$Total_MSE = rowSums(M)
-knitr::kable(M, format = "markdown") # display table
+KFOLD_df$Total_MSE = rowSums(KFOLD_df)
+knitr::kable(KFOLD_df, format = "markdown") # display table
 # print best d value
-print(paste("The best degree is: ",as.character(M[which.min(M$Total_MSE),]$d)))
+print(paste("The best degree is: ",
+            as.character(KFOLD_df[which.min(KFOLD_df$Total_MSE),]$Degree)))
 ```
 ## 4.2
 ```{R}
+# create k-fold indexes
+k=nrow(train.df)
+inds.part = myCVids(n=nrow(train.df),K=k)
+# create a data frame to save results into
+M = matrix(0, nrow = (length(d_vec)), ncol = k+1)
+LOOCV_df = data.frame(M) 
+LOOCV_df[,1] = d_vec # add degrees to results table
+colnames(LOOCV_df) = c("Degree", seq(k))
 
+# loop over k-folds
+for( k in seq(k)){
+  isk = (inds.part == k) # k varies from 1 to K
+  valid.k = which(isk) # test data index
+  train.k = which(!isk)
+  # split data 
+  train_sub_df = train.df[train.k,]
+  valid_df = train.df[valid.k,]
+  
+  d_mse_vec = c()
+  for(d in d_vec){
+    if(d==0){
+      # train a polynomial model
+      PR = lm(y ~ 1, data=train_sub_df)
+    }else{
+     # train a polynomial model
+      PR = lm(y ~ poly(x, d, raw = TRUE), data=train_sub_df) 
+    }
+    # get predicted values to calculate MSE
+    pred_val = predict(PR, valid_df, type="response")
+    pred_true_val_df = data.frame(pred = pred_val, actual = valid_df$y)
+    #calculate MSE
+    mse = mean((pred_true_val_df$actual - pred_true_val_df$pred)^2)
+    d_mse_vec = c(d_mse_vec, mse)
+  }
+  LOOCV_df[,k+1] = d_mse_vec
+}
+
+# tally of MSE
+LOOCV_df$Total_MSE = rowSums(LOOCV_df)
+knitr::kable(LOOCV_df[,c(1,k+2)], format = "markdown") # display table
+# print best d value
+print(paste("The best degree is: ",
+            as.character(LOOCV_df[which.min(LOOCV_df$Total_MSE),]$Degree)))
 ```
+There is a part in lectures where it says that LOOCV is the same as k-fold for polynomial regression as a special case.
+
 ## 4.3
 ```{R}
+# visualize LOOCV and K-fold CV
+# plot k-fold
+# calculate max and min limits of data
+kfold_max_vec = apply(KFOLD_df[, 2:6], 1, max)
+kfold_min_vec = apply(KFOLD_df[, 2:6], 1, min)
+kfold_mean_vec = apply(KFOLD_df[, 2:6], 1, mean)
+{plot(x=KFOLD_df$Degree, 
+     y=kfold_mean_vec,
+     ylab="Mean Squared Error",
+     main="5-fold CV",
+     xlab="Degree of Polynomial",
+     type='b',
+     col='red',
+     pch = 16,
+     lwd=3,
+     ylim=c(min(KFOLD_df[2:6]),max(KFOLD_df[2:6])))
+lines(x=KFOLD_df$Degree,
+     y=kfold_max_vec,
+     col="red",
+     lty=3,
+     lwd=3)
+lines(x=KFOLD_df$Degree,
+     y=kfold_min_vec,
+     col="red",
+     lty=3,
+     lwd=3)}
 
+# plot LOOCV
+# calculate max and min limits of data
+loocv_max_vec = apply(LOOCV_df[, 2:401], 1, max)
+loocv_min_vec = apply(LOOCV_df[, 2:401], 1, min)
+loocv_mean_vec = apply(LOOCV_df[, 2:401], 1, mean)
+{plot(x=LOOCV_df$Degree,
+     y=loocv_mean_vec,
+     ylab="Mean Squared Error",
+     main="LOOCV",
+     xlab="Degree of Polynomial",
+     type='b',
+     col='blue',
+     pch = 16,
+     lwd=3,
+     ylim=c(min(LOOCV_df[2:401]),max(LOOCV_df[2:401])))
+lines(x=LOOCV_df$Degree,
+     y=loocv_max_vec,
+     col="blue",
+     lty=3,
+     lwd=3)
+lines(x=LOOCV_df$Degree,
+     y=loocv_min_vec,
+     col="blue",
+     lty=3,
+     lwd=3)}
 ```
 
 ## 4.4
 ```{R}
+# parameters
+set.seed(100)
+d_vec = seq(0,4)
+# generate data
+train.df = genData(n=400,seed=100)
+test.df = genData(400)
 
+# create k-fold indexes
+k=5
+inds.part = myCVids(n=nrow(train.df),K=k)
+# create a data frame to save results into
+M = matrix(0, nrow = (length(d_vec)), ncol = k+1)
+KFOLD_df = data.frame(M) 
+KFOLD_df[,1] = d_vec # add degrees to results table
+colnames(KFOLD_df) = c("Degree", seq(k))
+
+# loop over k-folds
+for( k in seq(k)){
+  isk = (inds.part == k) # k varies from 1 to K
+  valid.k = which(isk) # test data index
+  train.k = which(!isk)
+  # split data 
+  train_sub_df = train.df[train.k,]
+  valid_df = train.df[valid.k,]
+  
+  d_mse_vec = c()
+  for(d in d_vec){
+    if(d==0){
+      # train a polynomial model
+      PR = lm(y ~ 1, data=train_sub_df)
+    }else{
+     # train a polynomial model
+      PR = lm(y ~ poly(x, d, raw = TRUE), data=train_sub_df) 
+    }
+    # get predicted values to calculate MSE
+    pred_val = predict(PR, valid_df, type="response")
+    pred_true_val_df = data.frame(pred = pred_val, actual = valid_df$y)
+    #calculate MSE
+    mse = mean((pred_true_val_df$actual - pred_true_val_df$pred)^2)
+    d_mse_vec = c(d_mse_vec, mse)
+  }
+  KFOLD_df[,k+1] = d_mse_vec
+}
+
+# tally of MSE
+KFOLD_df$Total_MSE = rowSums(KFOLD_df)
+knitr::kable(KFOLD_df, format = "markdown") # display table
+# print best d value
+print(paste("The best degree is: ",
+            as.character(KFOLD_df[which.min(KFOLD_df$Total_MSE),]$Degree)))
+
+# create k-fold indexes
+k=nrow(train.df)
+inds.part = myCVids(n=nrow(train.df),K=k)
+# create a data frame to save results into
+M = matrix(0, nrow = (length(d_vec)), ncol = k+1)
+LOOCV_df = data.frame(M) 
+LOOCV_df[,1] = d_vec # add degrees to results table
+colnames(LOOCV_df) = c("Degree", seq(k))
+
+# loop over k-folds
+for( k in seq(k)){
+  isk = (inds.part == k) # k varies from 1 to K
+  valid.k = which(isk) # test data index
+  train.k = which(!isk)
+  # split data 
+  train_sub_df = train.df[train.k,]
+  valid_df = train.df[valid.k,]
+  
+  d_mse_vec = c()
+  for(d in d_vec){
+    if(d==0){
+      # train a polynomial model
+      PR = lm(y ~ 1, data=train_sub_df)
+    }else{
+     # train a polynomial model
+      PR = lm(y ~ poly(x, d, raw = TRUE), data=train_sub_df) 
+    }
+    # get predicted values to calculate MSE
+    pred_val = predict(PR, valid_df, type="response")
+    pred_true_val_df = data.frame(pred = pred_val, actual = valid_df$y)
+    #calculate MSE
+    mse = mean((pred_true_val_df$actual - pred_true_val_df$pred)^2)
+    d_mse_vec = c(d_mse_vec, mse)
+  }
+  LOOCV_df[,k+1] = d_mse_vec
+}
+
+# tally of MSE
+LOOCV_df$Total_MSE = rowSums(LOOCV_df)
+knitr::kable(LOOCV_df[,c(1,k+2)], format = "markdown") # display table
+# print best d value
+print(paste("The best degree is: ",
+            as.character(LOOCV_df[which.min(LOOCV_df$Total_MSE),]$Degree)))
+
+# visualize LOOCV and K-fold CV
+# plot k-fold
+# calculate max and min limits of data
+kfold_max_vec = apply(KFOLD_df[, 2:6], 1, max)
+kfold_min_vec = apply(KFOLD_df[, 2:6], 1, min)
+kfold_mean_vec = apply(KFOLD_df[, 2:6], 1, mean)
+{plot(x=KFOLD_df$Degree, 
+     y=kfold_mean_vec,
+     ylab="Mean Squared Error",
+     main="5-fold CV",
+     xlab="Degree of Polynomial",
+     type='b',
+     col='red',
+     pch = 16,
+     lwd=3,
+     ylim=c(min(KFOLD_df[2:6]),max(KFOLD_df[2:6])))
+lines(x=KFOLD_df$Degree,
+     y=kfold_max_vec,
+     col="red",
+     lty=3,
+     lwd=3)
+lines(x=KFOLD_df$Degree,
+     y=kfold_min_vec,
+     col="red",
+     lty=3,
+     lwd=3)}
+
+# plot LOOCV
+# calculate max and min limits of data
+loocv_max_vec = apply(LOOCV_df[, 2:401], 1, max)
+loocv_min_vec = apply(LOOCV_df[, 2:401], 1, min)
+loocv_mean_vec = apply(LOOCV_df[, 2:401], 1, mean)
+{plot(x=LOOCV_df$Degree,
+     y=loocv_mean_vec,
+     ylab="Mean Squared Error",
+     main="LOOCV",
+     xlab="Degree of Polynomial",
+     type='b',
+     col='blue',
+     pch = 16,
+     lwd=3,
+     ylim=c(min(LOOCV_df[2:401]),max(LOOCV_df[2:401])))
+lines(x=LOOCV_df$Degree,
+     y=loocv_max_vec,
+     col="blue",
+     lty=3,
+     lwd=3)
+lines(x=LOOCV_df$Degree,
+     y=loocv_min_vec,
+     col="blue",
+     lty=3,
+     lwd=3)}
 ```
-
-```{R}
-
-```
-
-```{R}
-
-```
-
-```{R}
-
-```
-
-```{R}
-
-```
-
-```{R}
-
-```
-
 
 # Problem 5
 ```{R}
