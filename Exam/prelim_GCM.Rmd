@@ -353,7 +353,7 @@ for( k in seq(k)){
 KFOLD_df$Total_MSE = rowSums(KFOLD_df)
 knitr::kable(KFOLD_df, format = "markdown") # display table
 # print best d value
-print(paste("The best degree is: ",
+print(paste("The best K-fold degree is: ",
             as.character(KFOLD_df[which.min(KFOLD_df$Total_MSE),]$Degree)))
 ```
 ## 4.2
@@ -399,7 +399,7 @@ for( k in seq(k)){
 LOOCV_df$Total_MSE = rowSums(LOOCV_df)
 knitr::kable(LOOCV_df[,c(1,k+2)], format = "markdown") # display table
 # print best d value
-print(paste("The best degree is: ",
+print(paste("The best LOOCV degree is: ",
             as.character(LOOCV_df[which.min(LOOCV_df$Total_MSE),]$Degree)))
 ```
 There is a part in lectures where it says that LOOCV is the same as k-fold for polynomial regression as a special case.
@@ -435,9 +435,9 @@ lines(x=KFOLD_df$Degree,
 
 # plot LOOCV
 # calculate max and min limits of data
-loocv_max_vec = apply(LOOCV_df[, 2:401], 1, max)
-loocv_min_vec = apply(LOOCV_df[, 2:401], 1, min)
-loocv_mean_vec = apply(LOOCV_df[, 2:401], 1, mean)
+loocv_max_vec = apply(LOOCV_df[, 2:201], 1, max)
+loocv_min_vec = apply(LOOCV_df[, 2:201], 1, min)
+loocv_mean_vec = apply(LOOCV_df[, 2:201], 1, mean)
 {plot(x=LOOCV_df$Degree,
      y=loocv_mean_vec,
      ylab="Mean Squared Error",
@@ -447,7 +447,7 @@ loocv_mean_vec = apply(LOOCV_df[, 2:401], 1, mean)
      col='blue',
      pch = 16,
      lwd=3,
-     ylim=c(min(LOOCV_df[2:401]),max(LOOCV_df[2:401])))
+     ylim=c(min(LOOCV_df[,2:201]),max(LOOCV_df[,2:201])))
 lines(x=LOOCV_df$Degree,
      y=loocv_max_vec,
      col="blue",
@@ -510,7 +510,7 @@ for( k in seq(k)){
 KFOLD_df$Total_MSE = rowSums(KFOLD_df)
 knitr::kable(KFOLD_df, format = "markdown") # display table
 # print best d value
-print(paste("The best degree is: ",
+print(paste("The best K-fold degree is: ",
             as.character(KFOLD_df[which.min(KFOLD_df$Total_MSE),]$Degree)))
 
 # create k-fold indexes
@@ -518,7 +518,7 @@ k=nrow(train.df)
 inds.part = myCVids(n=nrow(train.df),K=k)
 # create a data frame to save results into
 M = matrix(0, nrow = (length(d_vec)), ncol = k+1)
-LOOCV_df = data.frame(M) 
+LOOCV_df = data.frame(M)
 LOOCV_df[,1] = d_vec # add degrees to results table
 colnames(LOOCV_df) = c("Degree", seq(k))
 
@@ -554,7 +554,7 @@ for( k in seq(k)){
 LOOCV_df$Total_MSE = rowSums(LOOCV_df)
 knitr::kable(LOOCV_df[,c(1,k+2)], format = "markdown") # display table
 # print best d value
-print(paste("The best degree is: ",
+print(paste("The best LOOCV degree is: ",
             as.character(LOOCV_df[which.min(LOOCV_df$Total_MSE),]$Degree)))
 
 # visualize LOOCV and K-fold CV
@@ -586,9 +586,9 @@ lines(x=KFOLD_df$Degree,
 
 # plot LOOCV
 # calculate max and min limits of data
-loocv_max_vec = apply(LOOCV_df[, 2:401], 1, max)
-loocv_min_vec = apply(LOOCV_df[, 2:401], 1, min)
-loocv_mean_vec = apply(LOOCV_df[, 2:401], 1, mean)
+loocv_max_vec = apply(LOOCV_df[,2:401], 1, max)
+loocv_min_vec = apply(LOOCV_df[,2:401], 1, min)
+loocv_mean_vec = apply(LOOCV_df[,2:401], 1, mean)
 {plot(x=LOOCV_df$Degree,
      y=loocv_mean_vec,
      ylab="Mean Squared Error",
