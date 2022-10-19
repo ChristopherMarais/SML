@@ -74,6 +74,7 @@ hist(C_var_vec,
      xlim=c(0,2),
      main="Sample variances (Case 1: Player C)")
 ```
+d) For case 1 we can see that the bootstrapping worked reasonably well. Naturally the Monte Carlo method performed the best and has a estimated mean and variance closest to the true variance and mean. Parametric and non-parametric bootstrapping seem to perform similarly in this case. neither are perfectly accurate, but they produce similar estimates of the mean and variance. In case 1 I would say that both methods had an equally similar bias and variance I would classify both these methods as having a high bias and a low variance. Both methods seem to struggle in estimating the true mean accurately. 
 
 ```{R}
 # e)
@@ -158,12 +159,8 @@ knitr::kable(mean_res_df,
 knitr::kable(var_res_df, 
              format = "markdown",
              caption = "Variance for different n values (Case 1).")
-
 ```
-(d) Carefully discuss your findings; specifically, accuracy (bias and variance) and merits/drawbacks of
-parametric vs nonparametric bootstrap. You can treat the results of the Monte Carlo-based inference
-(under simulation from the true distribution) as the golden standard, against which the parametric
-and nonparametric bootstrap results are compared.
+e) From this experiment we can see that the performance of all the methods increase as `n` increases. Once again for case 1 it seems as though the parametric and non-parametric methods perform almost equally well. They are not as good as the Monte Carlo method, but get closer in performance as the size of `n` increases. We can see that the variance decreases as `n` increases and also that the bias decreases with an increase in `n` for case 1. 
 
 
 ### Case 2
@@ -225,6 +222,8 @@ hist(C_var_vec,
      xlim=c(0,30),
      main="Sample variances (Case 2: Player C)")
 ```
+d) For case 2 we can see something different than what we saw in case 1.   
+
 
 ```{R}
 # e)
