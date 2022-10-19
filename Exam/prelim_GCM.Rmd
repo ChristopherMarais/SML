@@ -770,7 +770,7 @@ for( k in seq(k)){
 }
 
 # tally of MSE
-KFOLD_df$Total_MSE = rowSums(KFOLD_df)
+KFOLD_df$Total_MSE = rowSums(KFOLD_df[2:ncol(KFOLD_df)])
 knitr::kable(KFOLD_df, 
              format = "markdown",
              caption = "MSE by 5 folds at different degrees on validation data.") # display table
@@ -778,7 +778,7 @@ knitr::kable(KFOLD_df,
 print(paste("The best K-fold degree is: ",
             as.character(KFOLD_df[which.min(KFOLD_df$Total_MSE),]$Degree)))
 ```
-The optimal tuning parameter for d in this case is 1. when d=1 the total MSE for all 5 folds in cross validation is the lowest. 
+The optimal tuning parameter for d in this case is 2. when d=2 the total MSE for all 5 folds in cross validation is the lowest. However, the difference between d=1 and d=2 is not very large and it  might be more effective to go with d=1 in line wiht Occam's razor. 
 
 ## 4.2
 ```{R}
@@ -838,7 +838,7 @@ for(d in d_vec){
 }
 
 # tally of MSE
-LOOCV_df$Total_validation_MSE = rowSums(LOOCV_df)
+LOOCV_df$Total_validation_MSE = rowSums(LOOCV_df[2:ncol(LOOCV_df)])
 LOOCV_df$Test_MSE = test_d_vec
 knitr::kable(LOOCV_df[,c(1,k+2,k+3)], 
              format = "markdown",
@@ -848,7 +848,7 @@ print(paste("The best LOOCV degree is: ",
             as.character(LOOCV_df[which.min(LOOCV_df$Total_validation_MSE),]$Degree)))
 
 ```
-From these results we can see that the lowest total MSE on the validation data shows that a degree of 1 leads to the best model. However from the test MSE we can see that the degree of 2 has the best performance. However, the difference in performance between degrees 1, 2, 3, and 4 is not much and almost negligible and it is still satisfactory to settle for a degree of 1 when following the rule of Occam's razor. This means that when a bunch of models perform equally well it is best to go with the simplest model. We can see here that LOOCV gives us the same answer as we got from 5-fold CV. However, it might still be better to opt for 5-fold CV as LOOCV does not scramble the data enough with each fold highly correlated to the others leading to a high variance. Usually LOOCV should also be much more computationally expensive, however that is not the case when done on polynomial regression. 
+From these results we can see that the lowest total MSE on the validation data shows that a degree of 1 leads to the best model. However from the test MSE we can see that the degree of 1 has the best performance. However, the difference in performance between degrees 1, 2, 3, and 4 is not much and almost negligible and it is still satisfactory to settle for a degree of 1 when following the rule of Occam's razor. This means that when a bunch of models perform equally well it is best to go with the simplest model. We can see here that LOOCV gives us the same answer as we got from 5-fold CV. However, it might still be better to opt for 5-fold CV as LOOCV does not scramble the data enough with each fold highly correlated to the others leading to a high variance. Usually LOOCV should also be much more computationally expensive, however that is not the case when done on polynomial regression. 
 
 ## 4.3
 ```{R}
@@ -880,13 +880,15 @@ for(d in d_vec){
 
 # visualize LOOCV and K-fold CV
 # calculate max and min limits of data KFOLD
-kfold_max_vec = apply(KFOLD_df[, 2:(ncol(KFOLD_df)-1)], 1, max)
-kfold_min_vec = apply(KFOLD_df[, 2:(ncol(KFOLD_df)-1)], 1, min)
+# kfold_max_vec = apply(KFOLD_df[, 2:(ncol(KFOLD_df)-1)], 1, max)
+# kfold_min_vec = apply(KFOLD_df[, 2:(ncol(KFOLD_df)-1)], 1, min)
 kfold_mean_vec = apply(KFOLD_df[, 2:(ncol(KFOLD_df)-1)], 1, mean)
 # calculate max and min limits of data for LOOCV
-loocv_max_vec = apply(LOOCV_df[, 2:(ncol(LOOCV_df)-1)], 1, max)
-loocv_min_vec = apply(LOOCV_df[, 2:(ncol(LOOCV_df)-1)], 1, min)
+# loocv_max_vec = apply(LOOCV_df[, 2:(ncol(LOOCV_df)-1)], 1, max)
+# loocv_min_vec = apply(LOOCV_df[, 2:(ncol(LOOCV_df)-1)], 1, min)
 loocv_mean_vec = apply(LOOCV_df[, 2:(ncol(LOOCV_df)-2)], 1, mean)
+
+
 
 {plot(x=KFOLD_df$Degree, 
      y=kfold_mean_vec,
@@ -940,7 +942,7 @@ legend("topright",
        col = c("blue", "red","blue", "red", "black", "black"),
        lwd = 2)}
 ```
-On this data set we can see that the LOOCV and 5-fold CV have a very similar trend when looking at average MSE for each fold at each degree. This is not entirely in line with the test set of data, but it is following the same trend. The CV approaches give a MSE that is closer to the test MSE than what the training MSE would give. This indicates that these approaches are indeed useful to esti8mate parameters even though they reduce training data set size. 
+On this data set we can see that the LOOCV and 5-fold CV have a very similar trend when looking at average MSE for each fold at each degree. This is not entirely in line with the test set of data, but it is following the same trend. The CV approaches give a MSE that is closer to the test MSE than what the training MSE would give. This indicates that these approaches are indeed useful to estimate parameters even though they reduce training data set size. 
 
 ## 4.4
 ```{R}
@@ -989,7 +991,7 @@ for( k in seq(k)){
 }
 
 # tally of MSE
-KFOLD_df$Total_MSE = rowSums(KFOLD_df)
+KFOLD_df$Total_MSE = rowSums(KFOLD_df[2:ncol(KFOLD_df)])
 knitr::kable(KFOLD_df, 
              format = "markdown",
              caption = "MSE by 5 folds at different degrees on validation data.") # display table
@@ -1053,7 +1055,7 @@ for(d in d_vec){
 }
 
 # tally of MSE
-LOOCV_df$Total_validation_MSE = rowSums(LOOCV_df)
+LOOCV_df$Total_validation_MSE = rowSums(LOOCV_df[2:ncol(LOOCV_df)])
 LOOCV_df$Test_MSE = test_d_vec
 knitr::kable(LOOCV_df[,c(1,k+2,k+3)], 
              format = "markdown",
@@ -1090,12 +1092,12 @@ for(d in d_vec){
 
 # visualize LOOCV and K-fold CV
 # calculate max and min limits of data KFOLD
-kfold_max_vec = apply(KFOLD_df[, 2:(ncol(KFOLD_df)-1)], 1, max)
-kfold_min_vec = apply(KFOLD_df[, 2:(ncol(KFOLD_df)-1)], 1, min)
+# kfold_max_vec = apply(KFOLD_df[, 2:(ncol(KFOLD_df)-1)], 1, max)
+# kfold_min_vec = apply(KFOLD_df[, 2:(ncol(KFOLD_df)-1)], 1, min)
 kfold_mean_vec = apply(KFOLD_df[, 2:(ncol(KFOLD_df)-1)], 1, mean)
 # calculate max and min limits of data for LOOCV
-loocv_max_vec = apply(LOOCV_df[, 2:(ncol(LOOCV_df)-1)], 1, max)
-loocv_min_vec = apply(LOOCV_df[, 2:(ncol(LOOCV_df)-1)], 1, min)
+# loocv_max_vec = apply(LOOCV_df[, 2:(ncol(LOOCV_df)-1)], 1, max)
+# loocv_min_vec = apply(LOOCV_df[, 2:(ncol(LOOCV_df)-1)], 1, min)
 loocv_mean_vec = apply(LOOCV_df[, 2:(ncol(LOOCV_df)-2)], 1, mean)
 
 {plot(x=KFOLD_df$Degree, 
@@ -1107,7 +1109,7 @@ loocv_mean_vec = apply(LOOCV_df[, 2:(ncol(LOOCV_df)-2)], 1, mean)
      col='red',
      pch = 16,
      lwd=3,
-     ylim=c(3,4.5)
+     ylim=c(3.5,4.5)
      )
 lines(x=LOOCV_df$Degree,
      y=loocv_mean_vec,
@@ -1148,176 +1150,10 @@ legend("topright",
                   "Train data MSE (No CV)"),
        lty = c(1,1,2,3,1,3),
        col = c("blue", "red","blue", "red", "black", "black"),
-       lwd = 2)}
+       lwd = 2,
+       cex = 0.75)}
 ```
-
-```{R}
-# parameters
-set.seed(100)
-d_vec = seq(0,4)
-# generate data
-train.df = genData(n=400,seed=100)
-test.df = genData(400)
-
-# create k-fold indexes
-k=5
-inds.part = myCVids(n=nrow(train.df),K=k)
-# create a data frame to save results into
-M = matrix(0, nrow = (length(d_vec)), ncol = k+1)
-KFOLD_df = data.frame(M) 
-KFOLD_df[,1] = d_vec # add degrees to results table
-colnames(KFOLD_df) = c("Degree", seq(k))
-
-# loop over k-folds
-for( k in seq(k)){
-  isk = (inds.part == k) # k varies from 1 to K
-  valid.k = which(isk) # test data index
-  train.k = which(!isk)
-  # split data 
-  train_sub_df = train.df[train.k,]
-  valid_df = train.df[valid.k,]
-  
-  d_mse_vec = c()
-  for(d in d_vec){
-    if(d==0){
-      # train a polynomial model
-      PR = lm(y ~ 1, data=train_sub_df)
-    }else{
-     # train a polynomial model
-      PR = lm(y ~ poly(x, d, raw = TRUE), data=train_sub_df) 
-    }
-    # get predicted values to calculate MSE
-    pred_val = predict(PR, valid_df, type="response")
-    pred_true_val_df = data.frame(pred = pred_val, actual = valid_df$y)
-    #calculate MSE
-    mse = mean((pred_true_val_df$actual - pred_true_val_df$pred)^2)
-    d_mse_vec = c(d_mse_vec, mse)
-  }
-  KFOLD_df[,k+1] = d_mse_vec
-}
-
-# tally of MSE
-KFOLD_df$Total_MSE = rowSums(KFOLD_df)
-knitr::kable(KFOLD_df, format = "markdown") # display table
-# print best d value
-print(paste("The best K-fold degree is: ",
-            as.character(KFOLD_df[which.min(KFOLD_df$Total_MSE),]$Degree)))
-
-# create k-fold indexes
-k=nrow(train.df)
-inds.part = myCVids(n=nrow(train.df),K=k)
-# create a data frame to save results into
-M = matrix(0, nrow = (length(d_vec)), ncol = k+1)
-LOOCV_df = data.frame(M)
-LOOCV_df[,1] = d_vec # add degrees to results table
-colnames(LOOCV_df) = c("Degree", seq(k))
-
-# loop over k-folds
-for( k in seq(k)){
-  isk = (inds.part == k) # k varies from 1 to K
-  valid.k = which(isk) # test data index
-  train.k = which(!isk)
-  # split data 
-  train_sub_df = train.df[train.k,]
-  valid_df = train.df[valid.k,]
-  
-  d_mse_vec = c()
-  for(d in d_vec){
-    if(d==0){
-      # train a polynomial model
-      PR = lm(y ~ 1, data=train_sub_df)
-    }else{
-     # train a polynomial model
-      PR = lm(y ~ poly(x, d, raw = TRUE), data=train_sub_df) 
-    }
-    # get predicted values to calculate MSE
-    pred_val = predict(PR, valid_df, type="response")
-    pred_true_val_df = data.frame(pred = pred_val, actual = valid_df$y)
-    #calculate MSE
-    mse = mean((pred_true_val_df$actual - pred_true_val_df$pred)^2)
-    d_mse_vec = c(d_mse_vec, mse)
-  }
-  LOOCV_df[,k+1] = d_mse_vec
-}
-
-# tally of MSE
-LOOCV_df$Total_MSE = rowSums(LOOCV_df)
-knitr::kable(LOOCV_df[,c(1,k+2)], format = "markdown") # display table
-# print best d value
-print(paste("The best LOOCV degree is: ",
-            as.character(LOOCV_df[which.min(LOOCV_df$Total_MSE),]$Degree)))
-
-# estimate test data MSE
-test_d_vec = c()
-for(d in d_vec){
-  if(d==0){
-    # train a polynomial model
-    PR = lm(y ~ 1, data=train.df)
-  }else{
-   # train a polynomial model
-    PR = lm(y ~ poly(x, d, raw = TRUE), data=train.df) 
-  }
-  # get predicted values to calculate MSE
-  pred_val = predict(PR, test.df, type="response")
-  pred_true_val_df = data.frame(pred = pred_val, actual = test.df$y)
-  #calculate MSE
-  mse = mean((pred_true_val_df$actual - pred_true_val_df$pred)^2)
-  test_d_vec = c(test_d_vec, mse)
-}
-
-# visualize LOOCV and K-fold CV
-# calculate max and min limits of data KFOLD
-kfold_max_vec = apply(KFOLD_df[, 2:(ncol(KFOLD_df)-1)], 1, max)
-kfold_min_vec = apply(KFOLD_df[, 2:(ncol(KFOLD_df)-1)], 1, min)
-kfold_mean_vec = apply(KFOLD_df[, 2:(ncol(KFOLD_df)-1)], 1, mean)
-# calculate max and min limits of data for LOOCV
-loocv_max_vec = apply(LOOCV_df[, 2:(ncol(LOOCV_df)-1)], 1, max)
-loocv_min_vec = apply(LOOCV_df[, 2:(ncol(LOOCV_df)-1)], 1, min)
-loocv_mean_vec = apply(LOOCV_df[, 2:(ncol(LOOCV_df)-1)], 1, mean)
-
-{plot(x=KFOLD_df$Degree, 
-     y=kfold_mean_vec,
-     ylab="Mean Squared Error",
-     main="Mean MSE from CV",
-     xlab="Degree of Polynomial",
-     type='b',
-     col='red',
-     pch = 16,
-     lwd=3,
-     ylim=c(3.5,4.5))
-lines(x=LOOCV_df$Degree,
-     y=loocv_mean_vec,
-     type='b',
-     col='blue',
-     pch = 16,
-     lwd=3)
-lines(x=LOOCV_df$Degree,
-     y=test_d_vec,
-     type='b',
-     col='black',
-     pch = 16,
-     lwd=3)
-abline(v=KFOLD_df[which.min(KFOLD_df$Total_MSE),]$Degree,
-     col='red',
-     pch = 16,
-     lty=3,
-     lwd=3)
-abline(v=LOOCV_df[which.min(LOOCV_df$Total_MSE),]$Degree,
-     col='blue',
-     pch = 16,
-     lty=3,
-     lwd=3)
-legend("topright",
-       inset = 0.01, 
-       legend = c("Training LOOCV MSE",
-                  "Training K-fold CV MSE",
-                  "LOOCV best d", 
-                  "K-fold CV best d",
-                  "Test data MSE (No CV)"),
-       lty = c(1,1,3,3),
-       col = c("blue", "red","blue", "red", "black"),
-       lwd = 2)}
-```
+In this example with a larger data set we can see that the optimal degree is 3 for both CV approaches. This is accurate to what is represented in the test data. The test data also actually presents a MSE that is lower than the training data MSE. This is likely just an artifact of the random data set generation and is quite unexpected. Even though a degree of 3 is chosen here for both LOOCV and 5-fold CV it might be better to opt for a degree of 2 as the decrease in MSE from a degree of two to 3 is not as much and might not warrant the added complexity of the model. 
 
 # Problem 5
 ```{R}
@@ -1425,7 +1261,7 @@ legend("topright",
 
 knitr::kable(results_df, format = "markdown")
 ```
-The best classifier is the one that minimizes the objective function the best over values of x. In this case it was one with the design combinations of (A:1 C1: R:2) or (A:2 C1: R:2). For higher values of x an unbalanced population gives higher values from the objective function. A1 is thus better with even populations when. This is because with an uneven class ratio the mis-classification rate increases for higher values of x because a higher x value means a higher false positive count. Even when the false negative count is low. THis classifier is therefore not stable for all values of x and we choose the (A:1 C1: R:2) combination over the (A:2 C1: R:2) combination. Even though the (A:2 C1: R:2) combination clearly performs better at lower values of x. This in turn increased the mis-classifications calculated in the objective function. All classifiers that had a cfn that was 10 times the cfp resulted in an objective function that was orders of magnitude larger than the other classifiers. This makes intuitive senses as it dramatically increases the net cost of mis-classifications. With a TPR that is square rooted the objective function consistently returns a lower mis-classifications score. R2 is thus better. This is because, when the square root of the TPR is used to derive True positives they are higher than than when the TPR is not square rooted. This in turn decreases the amount of mis-classifications. 
+The best classifier is the one that minimizes the objective function the best over values of x. In this case it was one with the design combinations of (A:1 C1: R:2) or (A:2 C1: R:2). For higher values of x an unbalanced population gives higher values from the objective function. A1 is thus better with even populations when. This is because with an uneven class ratio the mis-classification rate increases for higher values of x because a higher x value means a higher false positive count. Even when the false negative count is low. This classifier is therefore not stable for all values of x and we choose the (A:1 C1: R:2) combination over the (A:2 C1: R:2) combination. Even though the (A:2 C1: R:2) combination clearly performs better at lower values of x. This in turn increased the mis-classifications calculated in the objective function. All classifiers that had a cfn that was 10 times the cfp resulted in an objective function that was orders of magnitude larger than the other classifiers. This makes intuitive senses as it dramatically increases the net cost of mis-classifications. With a TPR that is square rooted the objective function consistently returns a lower mis-classifications score. R2 is thus better. This is because, when the square root of the TPR is used to derive True positives they are higher than than when the TPR is not square rooted. This in turn decreases the amount of mis-classifications. 
 
 # Problem 6
 ```{R}
@@ -1446,14 +1282,26 @@ for (n in n_vec){
   sd_uniq_vec = c(sd_uniq_vec, sd(unique(samp_vec)))
 }
 
-#visualize data
-par(mfrow=c(3,2))
+# #visualize data
+{par(mfrow=c(2,3))
 for(i in names(df)[2:7]){
   hist(df[[i]],
-       xlab = "number",
-       main=i)
-}
+       xlab = "Number",
+       main=i,
+       ylim=c(0,210),
+       breaks = as.numeric(substr(i,2,nchar(i)))/5)
+}}
+
+# bar plot of of unique values for different values of n
+unique_df = t(data.frame(unique_sample_count = apply(df[, 2:(ncol(df))], 2, FUN=function(x){length(unique(x))}), 
+                         n=n_vec))
+{par(mfrow=c(1,1))
+  barplot(
+  unique_df,
+  beside=TRUE
+)}
 ```
+We can see that as our number of replications stay constant at 1000 that the larger our sampling range gets that there is a lower frequency of each of the possible unique numbers that gets sampled. The frequency for each unique value to be sampled from `n` reduces as `n` increases. We can similarly see in the bar plot that the amount of unique numbers sampled is approximately the same as `n` for increasing values of `n` up to the point where `n`=400. From `n`=400 and `n`=800 we can see that there were some numbers that were not even sampled. The amount of numbers that do not get sampled seem to increase with the size of `n`. 
 
 ```{R}
 # make table of results
