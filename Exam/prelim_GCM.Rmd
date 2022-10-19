@@ -184,7 +184,7 @@ samp_var = var(var_vec)
 print(paste("The sample mean is (Case 2: Player A): ", myRound(samp_mean)))
 print(paste("The sample variance is (Case 2: Player A): ", myRound(samp_var)))
 hist(var_vec,
-     ylim=c(0,550),
+     ylim=c(0,600),
      # breaks=20,
      xlim=c(0,30),
      main="Sample variances (Case 2: Player A)")
@@ -202,7 +202,7 @@ B_samp_var = var(B_var_vec)
 print(paste("The sample mean is (Case 2: Player B): ", myRound(B_samp_mean)))
 print(paste("The sample variance is (Case 2: Player B): ", myRound(B_samp_var)))
 hist(B_var_vec,
-     ylim=c(0,550),
+     ylim=c(0,600),
      # breaks=20,
      xlim=c(0,30),
      main="Sample variances (Case 2: Player B)")
@@ -217,7 +217,7 @@ C_samp_var = var(C_var_vec)
 print(paste("The sample mean is (Case 2: Player C): ", myRound(C_samp_mean)))
 print(paste("The sample variance is (Case 2: Player C): ", myRound(C_samp_var)))
 hist(C_var_vec,
-     ylim=c(0,550),
+     ylim=c(0,600),
      # breaks=20,
      xlim=c(0,30),
      main="Sample variances (Case 2: Player C)")
@@ -1259,7 +1259,6 @@ legend("topright",
              "cyan", 
              "purple"))}
 
-knitr::kable(results_df, format = "markdown")
 ```
 The best classifier is the one that minimizes the objective function the best over values of x. In this case it was one with the design combinations of (A:1 C1: R:2) or (A:2 C1: R:2). For higher values of x an unbalanced population gives higher values from the objective function. A1 is thus better with even populations when. This is because with an uneven class ratio the mis-classification rate increases for higher values of x because a higher x value means a higher false positive count. Even when the false negative count is low. This classifier is therefore not stable for all values of x and we choose the (A:1 C1: R:2) combination over the (A:2 C1: R:2) combination. Even though the (A:2 C1: R:2) combination clearly performs better at lower values of x. This in turn increased the mis-classifications calculated in the objective function. All classifiers that had a cfn that was 10 times the cfp resulted in an objective function that was orders of magnitude larger than the other classifiers. This makes intuitive senses as it dramatically increases the net cost of mis-classifications. With a TPR that is square rooted the objective function consistently returns a lower mis-classifications score. R2 is thus better. This is because, when the square root of the TPR is used to derive True positives they are higher than than when the TPR is not square rooted. This in turn decreases the amount of mis-classifications. 
 
@@ -1299,11 +1298,8 @@ unique_df = t(data.frame(unique_sample_count = apply(df[, 2:(ncol(df))], 2, FUN=
   barplot(
   unique_df,
   beside=TRUE
-)}
-```
-We can see that as our number of replications stay constant at 1000 that the larger our sampling range gets that there is a lower frequency of each of the possible unique numbers that gets sampled. The frequency for each unique value to be sampled from `n` reduces as `n` increases. We can similarly see in the bar plot that the amount of unique numbers sampled is approximately the same as `n` for increasing values of `n` up to the point where `n`=400. From `n`=400 and `n`=800 we can see that there were some numbers that were not even sampled. The amount of numbers that do not get sampled seem to increase with the size of `n`. 
+  )}
 
-```{R}
 # make table of results
 table_df$Mean_Unique = myRound(mean_uniq_vec, acc=2)
 table_df$SD_Unique = myRound(sd_uniq_vec, acc=2)
@@ -1311,3 +1307,6 @@ table_df = data.frame(t(table_df))
 
 knitr::kable(table_df, format = "markdown")
 ```
+We can see that as our number of replications stay constant at 1000 that the larger our sampling range gets that there is a lower frequency of each of the possible unique numbers that gets sampled. The frequency for each unique value to be sampled from `n` reduces as `n` increases. We can similarly see in the bar plot that the amount of unique numbers sampled is approximately the same as `n` for increasing values of `n` up to the point where `n`=400. From `n`=400 and `n`=800 we can see that there were some numbers that were not even sampled. The amount of numbers that do not get sampled seem to increase with the size of `n`. 
+
+In the table we can see that the mean unique numbers are all approximately half the size of `n`. It also shows that the standard deviation is approximately a third of the size of `n`. The mean and standard deviation and mean is kept constant in proportion to the sample size for the nonparametric bootstrap method.
