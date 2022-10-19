@@ -222,8 +222,7 @@ hist(C_var_vec,
      xlim=c(0,30),
      main="Sample variances (Case 2: Player C)")
 ```
-d) For case 2 we can see something different than what we saw in case 1.   
-
+d) For case 2 we can see something different than what we saw in case 1. Both the Parametric and N-n parametric seem to be accurately estimate the mean of the original distribution, but they are not as accurate with estimating the variance. However, the non-parametric approach seems to be better at estimating the variance than the parametric approach and this is likely because the distribution assumed in the parametric approach is different from the one of the original data. This is a definite drawback of parametric bootstrapping. Assumptions have to be made of the original distribution and this could cause discrepancies. In this case i would say that the parametric and non-parametric approaches have a low bias and a high variance. 
 
 ```{R}
 # e)
@@ -309,6 +308,7 @@ knitr::kable(var_res_df,
              format = "markdown",
              caption = "Variance for different n values (Case 2).")
 ```
+e) Similar to Case 1 we see here that when `n` increases we see a better estimate of the mean for the parametric and non-parametric approaches. This is however not true for the variance estimate as it does not improve as much with increasing `n` values. Once again the non-parametric approach performed slightly better than the parametric approach in this case.
 
 ### Case 3
 ```{R}
@@ -369,6 +369,7 @@ hist(C_var_vec,
      xlim=c(0,2),
      main="Sample variances (Case 3: Player C)")
 ```
+d) For this case the performance of the parametric and non-parametric methods are better than what was seen in case 2. This is likely because the larger degrees of freedom in the true distribution. In this case the parametric approach slightly outperformed the non-parametric approach. This is likely due to the increased degrees of freedom. With a higher `df` value a t distribution looks more similar to a normal distribution. Therefore the effects of assuming a normal distribution in the parametric approach is reduced when compared to case 2. For this case I would say that the bias is low and the variance is low. This shows us that a drawback of the parametric approach is that it is very dependent on the assumption about the original data. If the assumption is more similar to the original data it can outperform the non-parametric approach. However, when the assumption is incorrect the non-parametric approach might be a better option. Additionally, we can note that a drawback for the non-parametric approach is that it is very dependent on the sample size of the original data set and more importantly how well it represents the true population, when the sample size is large and we are confident that the sample represents the population well then the non-parametric approach might be viable option. However, when the sample size is small and not representative of the true population a parametric approach might be better. 
 
 ```{R}
 # e)
@@ -454,6 +455,7 @@ knitr::kable(var_res_df,
              format = "markdown",
              caption = "Variance for different n values (Case 3).")
 ```
+e) For an increase in `n` we can see accuracy for both the parametric and non-parametric approaches improve to be very similar to what is produced by the Monte Carlo method at n=400. This is a very similar performance as to what was seen in case 1. 
 
 # Problem 2
 ```{R}
@@ -483,7 +485,8 @@ top_features <- function(pval_lst, p_val, p_min){
   if(sum(as.integer(bool_lst))<=p_min){
     pval_df = t(data.frame(pval_lst))
     row.names(pval_df) <- NULL
-    bool_df=data.frame(pval_sig=matrix(unlist(bool_lst), nrow=length(bool_lst), byrow=TRUE))
+    bool_df=data.frame(pval_sig=matrix(unlist(bool_lst), nrow=length(bool_lst), 
+                                       byrow=TRUE))
     bool_df$p_val <- pval_df[,1]
     selected_df = bool_df[bool_df$pval_sig==TRUE,]
     feat_index_vec = as.numeric(rownames(selected_df))
@@ -491,7 +494,8 @@ top_features <- function(pval_lst, p_val, p_min){
   }else{
     pval_df = t(data.frame(pval_lst))
     row.names(pval_df) <- NULL
-    bool_df=data.frame(pval_sig=matrix(unlist(bool_lst), nrow=length(bool_lst), byrow=TRUE))
+    bool_df=data.frame(pval_sig=matrix(unlist(bool_lst), nrow=length(bool_lst), 
+                                       byrow=TRUE))
     bool_df$p_val <- pval_df[,1]
     bool_df$p_top = FALSE
     sorted_res = sort(bool_df$p_val, index.return=TRUE)
@@ -600,7 +604,7 @@ rownames(mcr_i_pstar_df) = c("p*", i_vec)
 knitr::kable(mcr_i_pstar_df, format = "markdown") # display table
 
 ```
-
+We can see that the error estimates are quite low for what we expect to see. Furthermore we can see that as the size of the original set of features increases we see a general steep drop in error rate. This is especially true when lower numbers of features are kept during selection. This is likely because only the best correlating features are selected and then the same data that was used to select these features are sued to test with again in cross-validation. This is wrong, we can tell that by performing feature selection before splitting the data into training and test sets that we do not get a true representation fo the performance as the selection process is part of training and has an influence on the test set when done before splitting the data. 
 
 # Problem 3
 ```{R}
@@ -884,7 +888,11 @@ abline(v=LOOCV_df[which.min(LOOCV_df$Total_MSE),]$Degree,
      lwd=3)
 legend("topright",
        inset = 0.01, 
-       legend = c("Training LOOCV MSE", "Training K-fold CV MSE", "LOOCV best d", "K-fold CV best d", "Test data MSE (No CV)"),
+       legend = c("Training LOOCV MSE", 
+                  "Training K-fold CV MSE", 
+                  "LOOCV best d", 
+                  "K-fold CV best d",
+                  "Test data MSE (No CV)"),
        lty = c(1,1,3,3),
        col = c("blue", "red","blue", "red", "black"),
        lwd = 2)}
@@ -1049,7 +1057,11 @@ abline(v=LOOCV_df[which.min(LOOCV_df$Total_MSE),]$Degree,
      lwd=3)
 legend("topright",
        inset = 0.01, 
-       legend = c("Training LOOCV MSE", "Training K-fold CV MSE", "LOOCV best d", "K-fold CV best d", "Test data MSE (No CV)"),
+       legend = c("Training LOOCV MSE",
+                  "Training K-fold CV MSE",
+                  "LOOCV best d", 
+                  "K-fold CV best d",
+                  "Test data MSE (No CV)"),
        lty = c(1,1,3,3),
        col = c("blue", "red","blue", "red", "black"),
        lwd = 2)}
@@ -1142,8 +1154,22 @@ results_df$design_id <- paste(results_df$A_vec,
 legend("topright",
      inset = 0.01,
      pch=c(19,19,19,19),
-     legend = c("A1:C2:R1", "A1:C2:R2", "A2:C2:R1", "A2:C2:R2", "A1:C1:R1", "A1:C1:R2", "A2:C1:R1", "A2:C1:R2"),
-     col = c("green", "blue","yellow", "grey", "black","red", "cyan", "purple"))}
+     legend = c("A1:C2:R1",
+                "A1:C2:R2", 
+                "A2:C2:R1",
+                "A2:C2:R2",
+                "A1:C1:R1", 
+                "A1:C1:R2", 
+                "A2:C1:R1",
+                "A2:C1:R2"),
+     col = c("green",
+             "blue",
+             "yellow", 
+             "grey", 
+             "black",
+             "red", 
+             "cyan", 
+             "purple"))}
 
 knitr::kable(results_df, format = "markdown")
 ```
