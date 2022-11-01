@@ -1,0 +1,68 @@
+---
+title: "ABE6933 SML HW9"
+# author: "Nikolay Bliznyuk"
+output: pdf_document
+fontsize: 11pt
+geometry: margin=2cm
+---
+
+# Directions
+
+Please submit \textbf{one PDF} file including all your reports (answer + code + figures + comments; must be easily readable and have file size under a few megabytes) and \textbf{one R code script}. The R script is supplementary material to ensure that your code runs correctly. If you are using RMarkdown, please also include your \texttt{.Rmd} file. 
+
+Place these two (or three) files in a folder, make a zip or rar archive, and submit the archive electronically via Dropbox file request  at \texttt{\url{tinyurl.com/nbliznyuk-submit-files}}
+(on the landing page, enter your name so that we know it is you and email so that you get a confirmation).
+
+For the full list of rules/policies/expectations, please visit "hw.rules.pdf" document.
+
+\textbf{Deadline:} 22-Nov-2020, 11:59 PM EST. 
+
+
+# Practice/Optional Problems (do not submit)
+
+
+\begin{enumerate}
+
+\item  Complete  the R tutorial for the ISLR chapters 9 and 10.
+You may find the Youtube videos by Trevor Hastie helpful; for links, see file \texttt{!\_youtube\_lab\_links.txt} in the subfolder \texttt{"[2].code/islr\_labs/"}
+
+\item ISLR ch.09: 1
+
+\item ISLR ch.10: 8
+
+
+\item Optional typed problems:
+
+\begin{enumerate}
+
+\item In Lab 9.6.3, try to reproduce ROC curves by hand by varying the threshold t in the classification boundary f(x)=t. Plot the true positive (TP) rate vs t, false positive (FP) rate vs t, and TP(t) vs FP(t).
+
+\item In the USArrests data, use the R function svd() to recover the output of princomp (PC sdev, scores and loadings) as discussed in the PCA lecture
+
+\item Watch a Youtube video below about "eigenfaces" for an intuitive application of PCA to face recognition: 
+
+\texttt{\url{https://www.youtube.com/watch?v=jQOZrXZTXcw}}
+
+\texttt{\url{https://www.youtube.com/watch?v=_lY74pXWlS8}}
+
+
+\end{enumerate}
+
+
+\end{enumerate}
+
+
+<!-- #  Required Problems (for submission) -->
+<!-- ISLR ch. 3: 4,10 -->
+
+
+\bigskip
+
+# Required Problems (for submission)
+
+
+ISLR ch.09: 2,3,5,8
+
+ISLR ch.10: 3,9,10
+
+

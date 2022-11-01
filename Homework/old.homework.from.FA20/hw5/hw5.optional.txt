@@ -1,0 +1,17 @@
+ABE6933 SML, Fall 2020, HW5 ** this hw is optional **
+Try to solve it by Sunday night, 18-Oct-2020, to prepare for the prelim.
+-
+
+I. Recommended problems (do not submit):
+
+Complete ISLR labs in section 5.3
+You may find the following youtube videos by Trevor Hastie helpful
+
+Ch.5
+https://www.youtube.com/watch?v=6dSXlqHAoMk
+https://www.youtube.com/watch?v=YVSmsWoBKnA
+
+ISLR ch.5: 3,4
+
+II. Required problems:
+ISLR ch.5: 5,6,9

@@ -1,0 +1,76 @@
+HW1 due by 11:59 PM EST on 24-Sep, Thur
+
+Rules (students must conform to the rules for your submission to be accepted): 
+* students must work individually and independently; 
+* each student may discuss ideas behind solutions with at most one other student, this must be appropriately acknowledged in the front page header of the solutions; sharing code or solutions is not allowed;
+* using solutions of others (e.g., classmates, more senior students that took the course earlier, solutions on the web, solution manuals, etc) is a direct violation of UF Honor Code;
+* if requested, explain the solution to course staff; 
+* submissions: via Dropbox file requests only - submit an archived folder with your solution and running R code, you can embed snippets of code in the solution, but make sure to additionally attach your code as separate R file (it should work!); folder name following convention hwX.MM.DD.HH.mm (omit date if submitting only one copy);
+* only the most recent solution submitted before the deadline will be graded; no penalties for "second, third, ... thoughts" so long as your submission is before the deadline;
+* for problems with equations - typeset (in Rmarkdown, Latex or Word, in the decreasing order of preference) or neatly hand-written and scanned; greyscale or black-and-white (200-300 dpi), no color; please test how your scan outputs respond to your inputs (writing materials - pens/pencils and paper). Smartphone scanners (e.g., MS Office Lens) often produce good output, but please check/test. Solutions must be easily readable and not take enormous amount of digital space (e.g., 10MB is typically an overkill).
+* penalties for late submission: 0.5 percentage points per 1 hour late, up to 72 hours, after which the assignment won't be accepted.
+
+Practice/optional (do not submit):
+
+1. practice with pdfs and cdfs: integrate uniform and exponential pdfs to obtain the cdfs, then differentiate your cdf expressions; make sure you get the same results (the correct pdfs); be super cautious about the range of possible values (aka support of a rv). This should be done by whatever means necessary, e.g., by analytical or numerical integration/differentiation.
+
+2. try to repeat the preceding exercise for normal and general gamma pdfs (can you find closed-form math expressions?); appreciate the fact that we can work with pdfs rather than cdfs
+
+3. Verify the factorization criterion for independence in the pdf form (i.e., establish equivalence of pdf & cdf versions) for 2 rvs. 
+
+4. MLE (a) by hand: try to do analytical maximization of the likelihood rather than the log-likelihood for a problem of your choice (any sample size of 10 or greater);
+(b) using R: try to plot your likelihood function in 3(a); compare with the plots of log-likelihood; which one is better behaved?
+
+5. Implement (by hand, without using external R libraries) the log-likelihood for the bivariate normal data model. Use numerical optimization to obtain the MLE of the 5-dimensional parameter vector (muv, sigv, rho). Refer to "2020.09.15.demo.MLE.R" under the code folder for details on how to generate the data.
+
+6. Vector calculus (of several variables); the (linear) least squares problem: solve the problem in the posted pdf, file name "vector.calculus.review.SML.FA16.pdf"
+[DO NOT SUBMIT: the pdf file contains the solution; please solve on your own without consulting the solution; then check the solution. References in the pdf file like 6.1, 6.2, etc, refer to the subproblems of this problem.]
+---
+
+
+Actual assignment (to submit):
+Submit via Dropbox file request using the link below
+tinyurl.com/nbliznyuk-submit-files
+
+
+1. (Inefficient) Implementation by hand a nearest-neighbors-like classifier with 2d features. Your goal is to provide your own implementation of a NN method "by hand", i.e., writing your own functions rather than using existing third-party libraries.
+The data for this problem is in file "SML.NN.data.csv". The columsn are
+Y (response - class 0 or 1), X1 and X2 (features, horizontal and vertical "coordinates") and set identification ("train", "valid" or "test").
+Approach: Tune parameters using calibration ("valid") set; report performance on left-out "test" set.
+1.1: Write a function getClass1Prop(x, r) with inputs x and r that outputs
+the proportion of class 1 among observations of the training data that are within radius r from point x. The function would return NA if there are no points within radius r. Use Euclidean distance when defining proximity. You will use this function in later subproblems to make predictions (0 or 1) using thresholding: predict 1 if the class 1 proportion is 0.5 or higher; else predict class 0.
+1.2: Write a function that, for a fixed radius r, computes misclassification rate over the validation data. I.e., for each x in the "valid" set, obtain prediction y_hat(x), compare it with the true y(x) and compute the proportion of incorrect predictions.
+1.3: Explore the "train" and "valid" data. What would be your guess(es) about the good values of r for accurate out-of-sample classification? (Record those for future comparisons in 1.4).
+1.4: Compute the misclassification rate (from 1.2) for a grid of r values (e.g., from 0.01 to 1 with step size 0.01) and plot. Find the value of r that achieves the lowest misclassification rate; call it r*. Use r* to obtain misclassification rate on "test" set. Compare it with the misclassification rates using your guesses in 1.3; briefly discuss.
+1.5*: Optional - optimize your code organization to reduce the use of loops. 
+
+
+2. Examine the factorization criterion in action in the special case of the bivariate normal pdf.
+2.1. Find the marginals (i.e., the marginal pdfs of X and Y from the joint pdf on slide 11 from 2019/08/29 or p.18 of 2016.08.24.statlearn.review.pack.01.pdf in slides with blanks). If you are unable to do this analytically (which is fine, no penalties), assume mu_X = mu_Y = 0; sigma_X = sigma_Y = 1; rho = 0.5; specifically, use numerical integration to find the values of the marginal pdfs on a fine grid from on the interval [-3,3], plot those and compare with Normal(0,1) pdf.
+2.2. Show that if rho = 0 then the rvs are independent. You can use the fact established in 2.1 that, marginally, X is normal with mean mu_X and variance sigma_X^2 (similarly, for Y).
+2.3. Assume mu_X = mu_Y = 0; sigma_X = sigma_Y = 1; let rho be general (strictly between -1 and 1). For values of rho on the grid from -0.75 to 0.75 with step size 0.25, plot the conditional pdf of X given that Y=1. If Y = 1 is the observed value, does the correlation (positive or negative) help one predicting X, relative to the case of rho=0? Briefly discuss.
+
+
+3. MLE with data from exponential distribution. Let X1,...,X100 be independent rvs from exponential distribution with rate lambda (i.e., rate is NOT the population mean here).
+Nature uses the following code to generate the data:
+set.seed(0); x = rexp(100,10); 
+I.e., Nature choses lambda=10, but this is not known to the statistician. 
+3.1. (computational) Use the examples from class to estimate lambda using the method of maximum likelihood. Show all steps.
+3.2. (optional) use calculus to obtain the (expression for) MLE of lambda. Show all steps (including checking the second-order conditions presented in class).
+
+
+4. Exact and approximate small-sample CIs for the mean. 
+For each of the cases 1-3 below, complete the steps (a)-(e) below.
+For j=1,...,1000, 
+(a) set the random seed to j, 
+(b) generate a random sample of size 4 from Normal(0,1)
+(c) compute a 2-sided 95% CI for the mean.
+(d) record whether the CI contains the true mean (=0).
+(e) for cases 2 and 3, also store the length of the CI
+Case 1: sig2 is known and is equal to 1.
+Case 2: sig2 is unknown and exact small sample CI is computed in (c) [using t-distribution quantiles]
+Case 3: sig2 is unknown and an approximate large-sample CI is computed in (c) [using Normal(0,1) quantiles]
+Report 
+(1) the "empirical frequency of coverage" (average of (d)) 
+(2) histogram of interval widths (when appropriate).
+Discuss your findings (particularly, try to relate (1) and (2)).

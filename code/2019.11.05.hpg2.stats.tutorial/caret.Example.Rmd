@@ -1,0 +1,53 @@
+---
+title: "caret Example"
+author: "Yi Han"
+output: pdf_document
+---
+
+```{r}
+library(ISLR)
+library(caret)
+Weekly$Year <- as.factor(Weekly$Year)
+head(Weekly)
+
+set.seed(1)
+Folds <- createFolds(1:dim(Weekly)[1], k=5, returnTrain = FALSE )
+
+Weekly.train <- Weekly[-Folds[[1]], ]
+Weekly.test <- Weekly[Folds[[1]], ]
+
+
+control1 <- trainControl(method = "repeatedcv",
+                        number = 5,
+                        repeats = 1,
+                        classProbs = TRUE)
+
+control2 <- trainControl(method = "oob")
+
+a <- Sys.time()                        
+SML.model <- train(x = Weekly.train[,!names(Weekly) %in% c("Direction")],
+                   y = Weekly.train[,"Direction"],
+                   data = Weekly.train,
+                   method = "rf",
+                   ntree = 1000,
+                   metric = "Accuracy",
+                   verbose = FALSE,
+                   tuneLength = 7,
+                   trControl = control1 ,
+                   importance = TRUE)
+b <- Sys.time()  
+b-a         # control1: 14.91429 secs     
+            # control2: 9.083024 secs   
+
+
+SML.model$finalModel
+SML.model$bestTune
+
+prd <- predict.train(SML.model, type = "raw", newdata = Weekly.test)
+MER <- nrow(Weekly.test[prd  != Weekly.test$Direction,])/dim(Weekly.test)[1]; MER
+                  
+plot(varImp(SML.model))            
+                   
+                     
+
+```

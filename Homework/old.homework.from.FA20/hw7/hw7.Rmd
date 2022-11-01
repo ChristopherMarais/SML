@@ -1,0 +1,44 @@
+---
+title: "ABE6933 SML HW7"
+# author: "Nikolay Bliznyuk"
+output: pdf_document
+fontsize: 11pt
+geometry: margin=2cm
+---
+
+# Directions
+
+Please submit \textbf{one PDF} file including all your reports (answer + code + figures + comments; must be easily readable and have file size under a few megabytes) and \textbf{one R code script}. The R script is supplementary material to ensure that your code runs correctly. If you are using RMarkdown, please also include your \texttt{.Rmd} file. 
+
+Place these two (or three) files in a folder, make a zip or rar archive, and submit the archive electronically via Dropbox file request  at \texttt{\url{tinyurl.com/nbliznyuk-submit-files}}
+(on the landing page, enter your name so that we know it is you and email so that you get a confirmation).
+
+For the full list of rules/policies/expectations, please visit "hw.rules.pdf" document.
+
+\textbf{Deadline:} 08-Nov-2020, 11:59 PM EST. 
+
+
+# Practice/Optional Problems (do not submit)
+
+
+\begin{enumerate}
+
+\item  Complete  the R tutorial for the ISLR chapter 7.
+You may find the Youtube videos by Trevor Hastie helpful; for links, see file \texttt{!\_youtube\_lab\_links.txt} in the subfolder \texttt{"[2].code/islr\_labs/"}
+
+\item ISLR ch.7: 9, 10 
+
+\item Play with the gam function in the mgcv library; (this is highly optional for this course, and won't be tested on a quiz, but may be very helpful for your own research work) 
+
+\end{enumerate}
+
+
+<!-- #  Required Problems (for submission) -->
+<!-- ISLR ch. 3: 4,10 -->
+
+
+\bigskip
+
+# Required Problems (for submission)
+
+ISLR ch.7: 1, 2, 3 (try doing plots using R), 6, 10

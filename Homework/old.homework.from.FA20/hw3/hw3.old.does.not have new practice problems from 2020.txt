@@ -1,0 +1,124 @@
+ABE6933 SML, Fall 2019, HW3 
+Soft deadline: 23:59EST on 01-Oct-2019, Tue.
+Hard deadline: 23:59EST on 02-Oct-2019, Wed.
+
+-
+You are encouraged to submit before the soft deadline, but no penalties will be applied for submission before the hard deadline. After the hard deadline, standard penalties accrue (i.e., 0.5% per hour late).
+---
+
+Rules (students must conform to the rules for your submission to be accepted): 
+* students must work individually and independently; 
+* each student may discuss ideas behind solutions with at most one other student, this must be appropriately acknowledged in the front page header of the solutions; sharing code or solutions is not allowed;
+* using solutions of others (e.g., classmates, more senior students that took the course earlier, solutions on the web, solution manuals, etc) is a direct violation of UF Honor Code;
+* if requested, explain the solution to course staff; 
+* submissions: via Dropbox file requests only - submit an archived folder with your solution and running R code, you can embed snippets of code in the solution, but make sure to additionally attach your code as separate R file (it should work!); folder name following convention hwX.MM.DD.HH.mm (omit date if submitting only one copy);
+* only the most recent solution submitted before the deadline will be graded; no penalties for "second, third, ... thoughts" so long as your submission is before the deadline;
+* for problems with equations - typeset (in Rmarkdown, Latex or Word, in the decreasing order of preference) or neatly hand-written and scanned; greyscale or black-and-white (200-300 dpi), no color; please test how your scan outputs respond to your inputs (writing materials - pens/pencils and paper). Smartphone scanners (e.g., MS Office Lens) often produce good output, but please check/test. Solutions must be easily readable and not take enormous amount of digital space (e.g., 10MB is typically an overkill).
+---
+
+Directions for submission (please follow closely to avoid penalties starting with hw2):
+1. Create a single pdf file of your solution (typeset or a readable scan) AND a single file with R code (R or Rmd or txt, NOT a Word file or a pdf file).
+2. Place your R code and your solutions writeup in a folder; then create an archive (zip, rar, tar.gz, etc).
+3. Submit your archive via Dropbox file request at
+tinyurl.com/nbliznyuk-submit-files
+
+Optional problems (new in 2020):
+1. For the typed problem 1, use your solution to devise an iterative procedure to compute the rank of an n-by-p matrix A.
+Verify your answer using the SVD decomposition (count the number of singular values numerically different from 0).
+2. solving linear systems using LU and QR factorizations.
+3. Using lm/multiple linear regression to "solve" general linear systems A*x=b, where A is n-by-m;
+
+Required problems (submit):
+-
+
+Typed problem 1: Let X be an n-by-p design matrix with n > p (predictors are in the columns); assume that the column of ones is the first column of X.
+Argue/show that, if columns of X are not linearly independent, then
+regressing the ith column of X on all other columns (for i=2,...,p) will identify this.
+HINT: if R^2 is one, what is RSS? Now relate this to the definition of linear 
+dependence of columns of a matrix. It may help you build intuition if you generate such a matrix and carry out the proposed procedure before providing a conceptual answer.
+
+Typed problem 2: Verify/prove or refute the following statement:
+if predictors/covariates are linearly independent, then they are uncorrelated.
+HINT 1: make sure you have entirely understand the two definitions.
+HINT 2: this problem does NOT assume you know how to "prove" mathematical statements.
+
+Typed problem 3: multiple linear regression (and its flavors) by hand in R
+3.1. Implement by hand an R function myOLS following the interface below.
+You are not allowed to call other functions that do statistics (e.g., no lm() calls); 
+you should use linear algebra operations (such as solve(A) to find the inverse of A).
+myOLS <- function(Y, X, is1 = TRUE){
+# Inputs: 
+# * Y is the vector of length n of response variables
+# * X is an n-by-p matrix of numerical covariates (in columns); p < n 
+# **  assume the columns of X are linearly independent and 
+# **  do not include the column for the intercept as a part of the X matrix
+# * is1 is a logical "flag" whether the intercept is included; is1 = TRUE by default 
+# Output:
+# the function must return a list L with two elements:
+# L[1] will contain the vector of OLS/MLE coefficients, betahat
+# L[2] will contain standard errors (i.e., estimated standard deviations) for betahat
+}
+Compare the results with those produced by lm() on the following simulated data:
+n = 30; set.seed(0); p = 3;
+X = matrix(runif(n*p),nrow=n)*2-1;
+b = seq(1,p,by=1);
+Y = X%*%b + rnorm(n);
+fit1 = lm(Y ~ X); summary(fit1); # regression with an intercept  
+fit0 = lm(Y ~ -1 + X); summary(fit0)  # regression without an intercept  
+#
+3.2. Use your implementation of myOLS to implement polynomial regression with one covariate, 
+i.e., Y = b0 + b1*x + ... + bk*x^k + epsilon. Intercept is always included. The interface is below.
+myPolyReg1 <- function(Y, X1, deg=1) {
+# Inputs: same as for myOLS, except
+# * X1 is a vector of length n that contain the covariate values (numerical)
+# * deg is the degree k (i.e., largest power) of the polynomial fit; k < n ; deg=1 by default.
+# Outputs: same as for myOLS 
+}
+Compare the results with those produced by lm() on the following simulated data:
+n = 30; set.seed(0);
+X = runif(n)*4-2; # X is uniformly distributed on [-2,2] 
+Y = 1 + 3*X  -2*X^2 + 1*X^3 + rnorm(n);
+fit0 = lm(Y ~ X + I(X^2) + I(X^3)); summary(fit0)
+#
+3.3. Use your implementation of myOLS to implement a one-way ANOVA model, i.e.,
+regression with a single categorical covariate. The interface for the function is below.
+myAnova1 <- function(Y, XF, is1=TRUE) {
+# Inputs: same as for myOLS, except
+# * XF is a vector of length n that contain the covariate values (categorical or "factor")
+# Outputs: same as for myOLS 
+}
+Compare the results with those produced by lm() on the following simulated data:
+n = 30; set.seed(0);
+XF = rep(c("A","B","C"),each=10)
+Y = rnorm(n) + rep(c(1,2,3),each=10)
+fit1 = lm(Y ~ XF); summary(fit1) # with an intercept
+fit0 = lm(Y ~ -1 + XF); summary(fit0) # without an intercept
+
+Typed problem 4: exploring the equivalence of OLS and MLE in linear regression under iid normal(0,sigma^2) errors model.
+Suppose the Nature generates the true data (pairs of (xi,yi)) as follows and then passes the vector of Y and X values to the statistician who then can fit the simple linear regression model by ordinary least squares (OLS).
+n = 30; set.seed(0);
+X = runif(n)*4-2;
+Y = 1 + 3*X + rnorm(n);
+fit1 = lm(Y ~ X); summary(fit1) # beta0_hat = 0.0161; beta1_hat = 2.9304, obtained by OLS
+4.1. Implement by hand the negative log-likelihood for the observed data. 
+The statistical model is yi = b0 + b1*xi + eps_i, where eps_i are iid normal(0,sig^2) errors; sig^2 is the variance.
+The interface of the function is below:
+myFullObj <- function(b,sig) {
+# Inputs: 
+# * b is the vector of regression coefficients, b=[b0,b1]; 
+# * sig is the standard dev of errors; sig > 0
+# Output: the negative log-likelihood of the observed data (Y given X) evaluated at b and sig
+}
+Your implementation may use the built-in R function dnorm, but this is not required. 
+Make sure that you implement the log-likelihood directly, rather than implementing the likelihood and then applying the log (without explicit mathematical simplifications on your end).
+#
+4.2. Assume a fixed known value for sig and minimize the objective function with respect to b only. E.g.,
+sigKnown = 2; myObj1 <- function(b) {myFullObj(b,sigKnown)};
+For optimization, specify unconstrained gradient-based search, e.g., method="BFGS".
+Carry out the numerical optimization of myObj1 for several different values of sigKnown, examine the solutions and discuss.
+Compare your minimizer(s) of myObj1 with the beta_OLS solution produced by lm() and discuss.
+#
+4.3. Now, do not assume a fixed known value for sig. Minimize myFullObj jointly with respect to b and sig.
+Make sure that you enforce the lower bound constraint on sig (e.g., sig > 10^(-5)) and use the gradient-based optimization routine that can handle such constraints, e.g., "L-BFGS-B". Follow the example from class when we studied the MLE (for iid data).
+Compare your solution with that produced by lm() and discuss. 
+(Optional:) Would you expect the MLE for sig to be equal to the estimate produced by lm ("Residual standard error")? Briefly discuss.

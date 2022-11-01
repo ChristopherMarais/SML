@@ -1,0 +1,76 @@
+ABE6933 SML, Fall 2019, HW4
+Soft deadline: 23:59EST on 08-Oct-2019, Tue.
+Hard deadline: 23:59EST on 09-Oct-2019, Wed.
+
+-
+You are encouraged to submit before the soft deadline, but no penalties will be applied for submission before the hard deadline. After the hard deadline, standard penalties accrue (i.e., 0.5% per hour late).
+---
+
+Rules (students must conform to the rules for your submission to be accepted): 
+* students must work individually and independently; 
+* each student may discuss ideas behind solutions with at most one other student, this must be appropriately acknowledged in the front page header of the solutions; sharing code or solutions is not allowed;
+* using solutions of others (e.g., classmates, more senior students that took the course earlier, solutions on the web, solution manuals, etc) is a direct violation of UF Honor Code;
+* if requested, explain the solution to course staff; 
+* submissions: via Dropbox file requests only - submit an archived folder with your solution and running R code, you can embed snippets of code in the solution, but make sure to additionally attach your code as separate R file (it should work!); folder name following convention hwX.MM.DD.HH.mm (omit date if submitting only one copy);
+* only the most recent solution submitted before the deadline will be graded; no penalties for "second, third, ... thoughts" so long as your submission is before the deadline;
+* for problems with equations - typeset (in Rmarkdown, Latex or Word, in the decreasing order of preference) or neatly hand-written and scanned; greyscale or black-and-white (200-300 dpi), no color; please test how your scan outputs respond to your inputs (writing materials - pens/pencils and paper). Smartphone scanners (e.g., MS Office Lens) often produce good output, but please check/test. Solutions must be easily readable and not take enormous amount of digital space (e.g., 10MB is typically an overkill).
+---
+
+Directions for submission (please follow closely to avoid penalties starting with hw2):
+1. Create a single pdf file of your solution (typeset or a readable scan) AND a single file with R code (R or Rmd or txt, NOT a Word file or a pdf file).
+2. Place your R code and your solutions writeup in a folder; then create an archive (zip, rar, tar.gz, etc).
+3. Submit your archive via Dropbox file request at
+tinyurl.com/nbliznyuk-submit-files
+
+
+I. Recommended problems (do not submit):
+
+Complete tutorial in ISLR section 4.6
+You may find the following youtube videos by Trevor Hastie helpful
+
+Ch.4
+https://www.youtube.com/watch?v=TxvEVc8YNlU
+https://www.youtube.com/watch?v=2cl7JiPzkBY
+https://www.youtube.com/watch?v=9TVVF7CS3F4
+
+ISLR ch.4: 1
+
+II. Required problems (submit):
+ISLR ch.4: 5, 9, 11 (except g - KNN)
+-
+Problem 11 clarification about training and test sets: use the following code to define training and test sets
+# -----
+# n = ?; # define n as number of observations/rows in the data frame
+propTrain = 0.7;                 # proportion of obs for training
+nt = floor(propTrain * n);       # number of obs for training
+set.seed(0); permID = sample(n); # see documentation and default args to the sample() fun
+train = permID[1:nt];            # ids/row numbers of the training observations
+test  = permID[(nt+1):n];        # ids/row numbers of the test observations
+# -----
+
+
+Typed problem 1: maximum likelihood estimation in logistic regression:
+Consider the Challenger O-rings dataset (see the "hw3/challenger" folder); 
+case study details are in the Powerpoint file.
+(a) implement the negative log-likelihood (as a function of parameter 
+vector [beta0,beta1]) for this dataset
+(b) optimize your objective function in 1(a) using a gradient-based algorithm
+using R's optim function (e.g., with BFGS option) and compare your estimates with the ones produced by R's glm() fit.
+(c) (optional) estimate the approximate variance-covariance matrix of the MLE betahat as the inverse of the "observed Fisher information" (which is the curvature/Hessian with respect to beta - estimated by finite differences - of the negative log-likelihood evaluated at the MLE betahat.) Compare with the standard errors reported by the summary of the model fitted by the R function glm(). 
+Specifically, to do (the optional) 1(c):
+(i) write a function that uses finite differences to approximately compute the matrix of second derivatives (known as the Hessian) at a given point.
+(ii) obtain the approximate Hessian of the negative log-likelihood at the MLE solution (your betaHat here); call it H;
+(iii) compute the inverse of H - call it S; S is our estimate of the covariance matrix of betaHat
+(iv) examine the square root of the diagonal of S (estimated standard errors of betaHat) and compare it with the standard errors reported by (summary of) the GLM fit. 
+
+Typed problem 2: classifiers with linear and nonlinear decision boundaries.
+Consider the simulated dataset used in problem 4 of the pretest, in "SML.pretest.data.csv"
+Here, use "train" and "valid" subsets to train the models below, then report misclassification rate on the "test" subset and discuss your results. Models for consideration:
+L1: logistic regression with an intercept and additive (main) effects of X1 and X2
+L2: logistic regression with an intercept, additive (main) effects of X1 and X2, as well as squares of X1 and X2 and the X1*X2 interaction
+D1: linear discriminant analysis
+D2: quadratic discriminant analysis
+(Optional): try to visualize the decision boundaries, particularly for L2 and D2.
+Note: in this problem, we pool "train" and "valid" sets and use those for training because the classifiers do not have extra tuning parameters that require additional calibration (and all model parameters are estimated statistically). In later chapters, we'll see that this is generally not the case (e.g., we have already seen an example of a NN method where tuning parameter (neighborhood size/radius) needs to be calibrated).
+
+

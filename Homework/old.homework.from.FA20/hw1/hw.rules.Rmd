@@ -1,0 +1,41 @@
+---
+title: "ABE6933 SML Homework Directions/Policies"
+# author: "Nikolay Bliznyuk"
+output: pdf_document
+fontsize: 11pt
+geometry: margin=1.75cm
+---
+
+# Directions
+
+Please submit \textbf{ONE PDF} file including all your reports (answer + code + figures + comments; must be easily readable and have file size under a few megabytes) and \textbf{ONE R code script}. (To combine pdf files, I had good success with a free and portable multiplatform program PDFsam, \url{https://pdfsam.org/pdfsam-basic/}, but there should be plenty of similar solutions.) The R script is supplementary material to ensure that your code runs correctly. If you are using RMarkdown, please also include your \texttt{.Rmd} file. 
+
+Place these two (or three) files in a folder, make a zip or rar archive, and submit the archive electronically via Dropbox file request  at \texttt{\url{tinyurl.com/nbliznyuk-submit-files}}
+(on the landing page, enter your name so that we know it is you and email so that you get a confirmation).
+
+\textbf{Deadline:} in 7 days after the release of an assignment (at least, 7 x 24 hours) 
+
+# Rules/Policies
+Students must conform to the rules below for your submission to be accepted: 
+\begin{itemize}
+\item students must work individually and independently; 
+\item each student may discuss ideas behind solutions with at most one other student, this must be appropriately acknowledged in the front page header of the solutions; sharing code or solutions is not allowed;
+\item using solutions of others (e.g., classmates, more senior students that took the course earlier, solutions on the web, solution manuals, etc) is a direct violation of UF Honor Code and will result in the failing grade in this course and hearing of the appropriate committee at UF;
+\item if requested, explain the solution to course staff; 
+\item submissions: via Dropbox file requests only - zip/rar file name following convention SML.hwX.MM.DD.HH.mm (omit date if submitting only one copy); no need to rename the file with your name, as Dropbox will append it; 
+\item only the most recent solution submitted before the deadline will be graded; no penalties for "second, third, ... thoughts" so long as your submission is before the deadline;
+\item for problems with equations - typeset (in Rmarkdown, Latex or Word, in the decreasing order of preference) or neatly hand-written and scanned; greyscale or black-and-white (200-300 dpi), no color; please test how your scan outputs respond to your inputs (writing materials - pens/pencils and paper). Smartphone scanners (e.g., MS Office Lens or Adobe Scan, to name a couple) often produce good output, but please check/test; specifically, take pictures under sufficient uniform lighting and/or use flash. Solutions must be easily readable and not take enormous amount of digital space (e.g., 200-300KB per page is adequate, but 1-2 MB per page is typically an overkill).
+\item penalties for late submission (unless due to a legit excuse coordinated with the instructor in advance, please see the syllabus): 0.5 percentage points per 1 hour late, up to 72 hours, after which the assignment won't be accepted.
+\end{itemize}
+
+# Weekly Homework Composition
+Your weekly homework will always consist of the following items
+\begin{enumerate}
+\item "Parsing" (and, of course, understanding) the lectures.
+\item Completing the assigned readings from the ISLR book or other sources, in "FA20.SML.schedule.xlsx"
+\item Completing labs from the ISLR text appropriate for the chapter under study.
+\item Completing required homework problems, both from the ISLR text and typed.
+\item Completing optional/practice problems; problems from the book may help with quizzes, typed problems will help with more conceptual understanding, particularly for students with stronger backgrounds.
+\end{enumerate}
+Although only item 4  needs to be submitted, all items 1-5 are required for successful completion of the course objectives (well, items 1-4.5, at least, save for the typed optional problems).
+
