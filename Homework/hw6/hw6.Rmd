@@ -8,23 +8,25 @@ geometry: margin=1.5cm
 
 # Chapter 6
 ## Question 1
-```{R}
+### a.) 
+The best subset method has lowest RSS. This is because the best subset method is optimized fully to the training data taking into account all possible combinations of predictors. The step wise methods do not take into consideration all possible combination of predictors and would not be fully optimized on the training data.  The larger k the more precise the fit for the best subset method will be. 
 
-```
+### b.) 
+There is no way of telling which of the methods would perform best on the testing data. This is totally dependent on how well the training data represents the testing data. if the testing data is represented well by the training data then the best subset method might perform better as it results in a more precise fit on the training data (sometimes resulting in over fitting), however if the testing data is not represented very well by the training data then the step wise methods might perform better as they generalize better than the best subset method. 
 
-```{R}
-```
-
-```{R}
-```
-
-```{R}
-```
-
-```{R}
-```
+### c.) 
+  i.) True \
+  ii.) True \
+  iii.) False \
+  iv.) False \
+  v.) False \
 
 ## Question 2
+### a.) 
+
+### b.)
+
+### c.)
 
 ```{R}
 ```
@@ -43,6 +45,16 @@ geometry: margin=1.5cm
 
 
 ## Question 4
+### a.) 
+
+### b.)
+
+### c.)
+
+### d.) 
+
+### e.)
+
 
 ```{R}
 ```
@@ -58,6 +70,18 @@ geometry: margin=1.5cm
 
 
 ## Question 8
+### a.) 
+
+### b.)
+
+### c.)
+
+### d.) 
+
+### e.)
+
+### f.)
+
 
 ```{R}
 ```
