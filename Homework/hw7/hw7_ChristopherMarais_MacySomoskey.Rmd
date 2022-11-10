@@ -1,6 +1,6 @@
 ---
 title: "STA6703 SML HW7"
-author: "Christopher Marais"
+author: "Christopher Marais and Macy Somoskey"
 output: pdf_document
 fontsize: 11pt
 geometry: margin=2cm
@@ -43,30 +43,30 @@ geometry: margin=2cm
   \\
   f_2''(\xi) &= 2(\beta_2-3\beta_4\xi) + 6\xi(\beta_3+\beta_4) \\
   &=  2\beta_2 - 6\beta_4\xi + 6\beta_3\xi + 6\beta_4\xi \\
-  &=  2\beta_2 + 3\beta_3\xi^2 = f_1''(\xi)
+  &=  2\beta_2 + 6\beta_3\xi^2 = f_1''(\xi)
   \end{aligned}$$
   
 
 ## Problem 2
 ### a.)
-![image](a.png)
-λ handles over fitting and controls the wigglyness of the function. In this case g hat = 0 due to the large smoothing parameter. g_(0)(x) -> 0
+![image](a.png) \
+Lambda handles over fitting and controls the wigglyness of the function. In this case g hat = 0 due to the large smoothing parameter. g_(0)(x) -> 0
 
 ### b.)
-![image](b.png)
+![image](b.png) \
 g hat = cx+d where c and d are constants due to the large smoothing parameter. g_(2)(x) -> 0
 
 ### c.)
-![image](c.png)
+![image](c.png) \
 g hat = cx2+dx+e where c, d, and e are constants due to the large smoothing parameter. g_(3)(x) -> 0
 
 ### d.)
-![image](d.png)
-The smaller λ, the more wiggly the function and g hat interpolates yi when λ = 0. No smoothing occurs.
+![image](d.png) \
+The smaller lambda, the more wiggly the function and g hat interpolates yi when Lambda = 0. No smoothing occurs.
 
 ### e.)
-![image](e.png)
-The smaller λ, the more wiggly the function and g hat interpolates yi when λ = 0. No smoothing occurs.
+![image](e.png) \
+The smaller lambda, the more wiggly the function and g hat interpolates yi when Lambda = 0. No smoothing occurs.
 
 ## Problem 3
 ```{R}
@@ -209,10 +209,14 @@ When all other variables are kept constant the state tuition seems to increase a
 preds = predict(gam.m1,newdata = college_test)
 mse = mean((college_test$Outstate - preds)^2)
 print(mse)
+```
+The graduation rate seems to have a non-linear relationship with the outstate variable.
 
+### d.)
+```{R}
 gam.m2 = gam(Outstate~Private+s(Room.Board,4)+s(PhD,4)+s(perc.alumni,2)+s(Expend,4), data=college_train)
 gam.m3 = gam(Outstate~Private+s(Room.Board,4)+s(PhD,4)+s(perc.alumni,2)+s(Expend,4)+Grad.Rate, data=college_train)
 gam.m4 = gam(Outstate~Private+s(Room.Board,4)+s(PhD,4)+s(perc.alumni,2)+s(Expend,4)+s(Grad.Rate,4), data=college_train)
 anova(gam.m2,gam.m3,gam.m4,gam.m1, test="F")
 ```
-The graduation rate seems to have a non-linear relationship with the outstate variable. From the Anova we can see that a Generalized Additive Model with a non-linear spline of degree 4 that also includes the Grad.rate variable is required to produce the response.
+ From the Anova we can see that a Generalized Additive Model with a non-linear spline of degree 4 that also includes the Grad.rate variable is required to produce the response.
