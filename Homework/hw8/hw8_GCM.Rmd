@@ -1,0 +1,45 @@
+---
+title: "STA6703 SML HW8"
+author: "Christopher Marais"
+output: pdf_document
+fontsize: 11pt
+geometry: margin=2cm
+---
+
+# Question 3
+![Classification Error, Gini Index, and Entropy](Q3.png)
+```{R}
+
+```
+
+# Question 8
+## a.)
+## b.)
+## c.)
+## d.)
+## e.)
+
+
+# Question 9
+## a.)
+## b.)
+## c.)
+## d.)
+## e.)
+## f.)
+## g.)
+## h.)
+## i.)
+## j.)
+## k.)
+
+# Question 10
+## a.)
+## b.)
+## c.)
+## d.)
+## e.)
+## f.)
+## g.)
+
+
