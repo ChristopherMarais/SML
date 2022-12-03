@@ -63,30 +63,40 @@ load('final.test.v1.Rdata')
 ```{R}
 # initialize information
 k = 5
-
+d_max = 10
 # Outer CV to estimate performance (seed=0)
 n_i = nrow(prob3.df)
 for(k_i in seq(k)){
-  inds.part = myCVids(n=n_i, k=k, seed=0)
+  inds.part = myCVids(n=n_i, K=k, seed=0)
   isk = (inds.part == k_i)
   valid.i = which(isk)
   train.i = which(!isk)
+  # split data into train and test sets
+  data.valid.i = prob3.df[valid.i,]
+  rownames(data.valid.i) <- NULL
+  data.train.i = prob3.df[train.i,]
+  rownames(data.train.i) <- NULL
   
   # Estimate performance 
   #########
   
   # Inner CV to estimate parameters (seed=1000)
-  n_j = length(train.i)
+  n_j = length(data.train.i)
   for(k_j in seq(k)){
-    inds.part = myCVids(n=n_j, k=k, seed=1000)
+    inds.part = myCVids(n=n_j, K=k, seed=1000)
     isk = (inds.part == k_j)
     valid.j = which(isk)
     train.j = which(!isk)
-    
-    # Estimate parameters
-    ########
-    # use polynomial and estimate d
-    
+    # split data into train and test sets
+    data.valid.j = data.train.i[valid.j,]
+    data.train.j = data.train.i[train.j,]
+
+    # Estimate parameters (d)
+    # for(d in seq(d_max)){
+    #   lm.fit = lm(y~poly(x, d), data = train.j)
+    #   mse = mean((y - predict (lm.fit , valid.j))^2)
+    # }
+
   }
 }
 
