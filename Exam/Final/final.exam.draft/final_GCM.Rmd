@@ -64,6 +64,14 @@ load('final.test.v1.Rdata')
 # initialize information
 k = 5
 d_max = 10
+
+# Mode function
+Mode <- function(x) {
+  ox <- order(x)
+  ux <- unique(ox)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+
 # Outer CV to estimate performance (seed=0)
 n_i = nrow(prob3.df)
 for(k_i in seq(k)){
@@ -82,6 +90,8 @@ for(k_i in seq(k)){
   
   # Inner CV to estimate parameters (seed=1000)
   n_j = nrow(data.train.i)
+  d_opt_vec = c()
+  mse_opt_vec = c()
   for(k_j in seq(k)){
     inds.part = myCVids(n=n_j, K=k, seed=1000)
     isk = (inds.part == k_j)
@@ -92,12 +102,25 @@ for(k_i in seq(k)){
     data.train.j = data.train.i[train.j,]
 
     # test different parameters (d)
-    # for(d in seq(d_max)){
-    #   lm.fit = lm(y~poly(x, d), data = train.j)
-    #   mse = mean((y - predict (lm.fit , valid.j))^2)
-    # }
-
+    lm_results <- lapply(1:d_max, function(d) lm(y ~ poly(x, d), data = data.train.j))
+    mse_vec = c()
+    for(d in seq(d_max)){
+      lm.fit = lm_results[[d]]
+      mse = mean((data.valid.j$y - predict(lm.fit , data.valid.j))^2)
+      mse_vec = c(mse_vec, mse)
+    }
+    d_opt = which.min(mse_vec)
+    mse_opt = min(mse_vec)
+    d_opt_vec = c(d_opt_vec, d_opt)
+    mse_opt_vec = c(mse_opt_vec, mse_opt)
+    
+    d_mse_opt_df = data.frame(d_opt_vec, mse_opt_vec)
   }
+  
+  # select the mode of parameter d for all inner folds
+  # if multiple modes, select the smallest value for d
+  print(d_mse_opt_df)
+  print(Mode(d_mse_opt_df$d_opt_vec))
 }
 
 
@@ -109,15 +132,14 @@ for(k_i in seq(k)){
 
 ```{R}
 lm_results <- lapply(1:d_max, function(d) lm(y ~ poly(x, d), data = data.train.j))
+mse_vec = c()
 for(d in seq(d_max)){
-
-  # lm.fit = lm(y~poly(x, d), data = data.train.j)
-  
   lm.fit = lm_results[[d]]
   mse = mean((data.valid.j$y - predict(lm.fit , data.valid.j))^2)
-  print(paste(d, mse))
+  mse_vec = c(mse_vec, mse)
 }
 
+d_opt = which.min(mse_vec)
 ```
 
 # Problem 4
