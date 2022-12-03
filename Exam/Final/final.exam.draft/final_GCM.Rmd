@@ -5,6 +5,21 @@ output: pdf_document
 fontsize: 11pt
 geometry: margin=2cm
 ---
+# Exam code
+```{R}
+myCVids <- function(n, K, seed=0) {
+# balanced subsets generation (subset sizes differ by at most 1)
+# n is the number of observations/rows in the training set
+# K is the desired number of folds (e.g., 5 or 10)
+set.seed(seed);
+t = floor(n/K); r = n-t*K;
+id0 = rep((1:K),times=t)
+ids = sample(id0,t*K)
+if (r > 0) {ids = c(ids, sample(K,r))}
+ids
+}
+```
+
 
 # Problem 1
 ## 1.1
