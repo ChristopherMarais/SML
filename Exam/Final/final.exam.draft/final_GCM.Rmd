@@ -81,7 +81,7 @@ for(k_i in seq(k)){
   #########
   
   # Inner CV to estimate parameters (seed=1000)
-  n_j = length(data.train.i)
+  n_j = nrow(data.train.i)
   for(k_j in seq(k)){
     inds.part = myCVids(n=n_j, K=k, seed=1000)
     isk = (inds.part == k_j)
@@ -91,7 +91,7 @@ for(k_i in seq(k)){
     data.valid.j = data.train.i[valid.j,]
     data.train.j = data.train.i[train.j,]
 
-    # Estimate parameters (d)
+    # test different parameters (d)
     # for(d in seq(d_max)){
     #   lm.fit = lm(y~poly(x, d), data = train.j)
     #   mse = mean((y - predict (lm.fit , valid.j))^2)
@@ -107,9 +107,23 @@ for(k_i in seq(k)){
 
 ```
 
+```{R}
+lm_results <- lapply(1:d_max, function(d) lm(y ~ poly(x, d), data = data.train.j))
+for(d in seq(d_max)){
+
+  # lm.fit = lm(y~poly(x, d), data = data.train.j)
+  
+  lm.fit = lm_results[[d]]
+  mse = mean((data.valid.j$y - predict(lm.fit , data.valid.j))^2)
+  print(paste(d, mse))
+}
+
+```
+
 # Problem 4
 ## 4.a
 ```{R}
+
 
 ```
 
