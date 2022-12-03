@@ -85,9 +85,6 @@ for(k_i in seq(k)){
   data.train.i = prob3.df[train.i,]
   rownames(data.train.i) <- NULL
   
-  # Estimate performance 
-  #########
-  
   # Inner CV to estimate parameters (seed=1000)
   n_j = nrow(data.train.i)
   d_opt_vec = c()
@@ -105,9 +102,9 @@ for(k_i in seq(k)){
     lm_results <- lapply(1:d_max, function(d) lm(y ~ poly(x, d), data = data.train.j))
     mse_vec = c()
     for(d in seq(d_max)){
-      lm.fit = lm_results[[d]]
-      mse = mean((data.valid.j$y - predict(lm.fit , data.valid.j))^2)
-      mse_vec = c(mse_vec, mse)
+      lm.fit.j = lm_results[[d]]
+      mse_j = mean((data.valid.j$y - predict(lm.fit.j , data.valid.j))^2)
+      mse_vec = c(mse_vec, mse_j)
     }
     d_opt = which.min(mse_vec)
     mse_opt = min(mse_vec)
@@ -119,27 +116,25 @@ for(k_i in seq(k)){
   
   # select the mode of parameter d for all inner folds
   # if multiple modes, select the smallest value for d
-  print(d_mse_opt_df)
-  print(Mode(d_mse_opt_df$d_opt_vec))
+  mode_d = Mode(d_mse_opt_df$d_opt_vec)
+  
+  # use mode_d to retrain polynomial model on data in outer CV
+  lm.fit.i = lm(y ~ poly(x, mode_d), data = data.train.i)
+  mse_i = mean((data.valid.i$y - predict(lm.fit.i , data.valid.i))^2)
+  
+  # estiamte performance
+  print(paste(mode_d, mse_i))
 }
 
-
-
-
-
-
+# should model be trained in outer and inner loop? yes
+# potential drawbacks are computation time
+# Report mse and d for outer loop
+# report mse and d for inner loop
+# group them together print dataframe and then final d and final mse for each outer loop
 ```
 
 ```{R}
-lm_results <- lapply(1:d_max, function(d) lm(y ~ poly(x, d), data = data.train.j))
-mse_vec = c()
-for(d in seq(d_max)){
-  lm.fit = lm_results[[d]]
-  mse = mean((data.valid.j$y - predict(lm.fit , data.valid.j))^2)
-  mse_vec = c(mse_vec, mse)
-}
 
-d_opt = which.min(mse_vec)
 ```
 
 # Problem 4
