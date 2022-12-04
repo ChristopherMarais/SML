@@ -5,8 +5,9 @@ output: pdf_document
 fontsize: 11pt
 geometry: margin=2cm
 ---
-# Exam code & data
+# Exam code, data, and libraries
 ```{R}
+# functions
 myCVids <- function(n, K, seed=0) {
 # balanced subsets generation (subset sizes differ by at most 1)
 # n is the number of observations/rows in the training set
@@ -53,19 +54,24 @@ bin2dec <- function(binM) {
   d
 }
 
+# data
 load('final.test.v1.Rdata')
+
+# libraries
+library(ROCR)
 ```
 
 
 ## My functions
 ```{R}
 # functions
-MCR <- function(target, predicted){
-  # Mis-classification ratio calculation
+# Mis-classification ratio calculation
+MCR <- function(target, predicted, threshold=0.5){
   if(length(target)!=length(predicted)){
-    print("ERROR: predictions and targets not of the same shape!")
+    print("ERROR: predictions and true values not of same shape")
   }else{
-    mcr = sum(predicted != target)/length(target)
+    pred_vals = as.integer((predicted > threshold))
+    mcr = sum(pred_vals != target)/length(target)
     return(mcr)
   }
 }
@@ -180,45 +186,100 @@ for(k_i in seq(k)){
 # report mse and d for inner loop
 # group them together print dataframe and then final d and final mse for each outer loop
 ```
-
-```{R}
-
-```
-
 # Problem 4
-## 4.a
-```{R}
+## 4
+```{R, warning=FALSE}
 # initialize data
 p = 4
+k_max = 5
+n = nrow(prob4.df)
 binM = myf(p)
 ids = bin2dec(binM)
+threshold_vec = seq(0, 1, 0.1)
+ROC_df = data.frame(matrix(ncol = length(ids), nrow = n), Y=prob4.df$Y)
+colnames(ROC_df) = c(ids, "Y")
+
 
 # loop through models
-gamma = binM[4,]
-alpha = ids[4]
-X = prob4.df[,gamma==1]
-Y = prob4.df$Y
-data_df = data.frame(Y, X)
+feature_names = c("X1","X2","X3","X4")
+features_vec = c()
+mean_mcr_vec = c()
+for(i in ids){
+  # select subset of data
+  gamma = binM[i+1,]
+  alpha = ids[i+1]
+  X = data.frame(Intercept=1, prob4.df[,-5][,gamma==1])
+  Y = prob4.df$Y
+  data_df = data.frame(Y, X)
+  
+  # get feature names of id
+  if(sum(gamma)==0){
+    features = "None"
+  }else{
+    features = feature_names[gamma==1]
+  }
+  features_vec = c(features_vec, paste(features,collapse=" "))
 
-# logistic regression
-glm.fit = glm(Y ~., 
-             family=binomial, 
-             data=data_df)
+  # perform 5-fold CV
+  inds.part = myCVids(n, 5, seed=0)
+  # loop through folds
+  mcr_vec = c()
+  valid_vec_lst = list()
+  for(k in seq(1:k_max)){
+    isk = (inds.part == k)
+    valid.k = which(isk)
+    train.k = which(!isk)
+    append(valid_vec_lst, valid.k)
+    
+    # train logistic regression model
+    glm.fit = glm(Y ~ 0 +.,
+                 family=binomial,
+                 data=as.data.frame(data_df[train.k,]))
+    # print(summary(glm.fit))
+    
+    # predict target on validation data  
+    pred = predict(glm.fit , data_df[valid.k,])
+    ROC_df[valid.k,i] = pred
+    
+    # calculate mis-classification error rate for default 0.5 threshold
+    mcr = MCR(target=data_df[valid.k,]$Y, predicted=pred, threshold=0.5)
+    mcr_vec = c(mcr_vec, mcr)
+#####################################################
+# get full pred_Y from folds
+# get MCR at different thresholds for Y vs Y_pred
 
-# perform 5fold CV
+#####################################################       
+    # ROC curve threshold loop
+    # mcr_t_vec = c()
+    # for(j in seq(1:length(threshold_vec))){
+    #   t = threshold_vec[j]
+    #   mcr_t = MCR(target=data_df[valid.k,]$Y, predicted=pred, threshold=t)
+    #   mcr_t_vec = c(mcr_t_vec, mcr_t)
+    #   ROC_df[valid.k,] = mcr_t_vec
+    # }
+    # mcr_t_df = data.frame(mcr_t_vec)
+    # rownames(mcr_t_df) = threshold_vec
+    # ROC_df[valid.k,j] = mcr_t_df
+#####################################################    
+  }
+  mean_mcr = mean(mcr_vec)
+  mean_mcr_vec = c(mean_mcr_vec, mean_mcr)
+}
 
-# plot of the CV estimates of the test misclassification error 
-# rate versus model id, as well as the
-# selected covariates in the best model
-alpha
-colnames(X)
-mcr = MCR(target = t, predicted = p)
+
+
+# add data to a data frame
+res_df = data.frame(ids,
+features_vec,
+mean_mcr_vec)
+colnames(res_df) = c("ID", "covariates", "mean_mcr")
+res_df = res_df[order(res_df$mean_mcr),]
+rownames(res_df) = NULL
+knitr::kable(res_df, format = "markdown")
+
+print(res_df[1,])
 ```
 
-## 4.b
-```{R}
-
-```
 
 # Problem 5
 ```{R}
