@@ -187,7 +187,7 @@ for(k_i in seq(k)){
 # group them together print dataframe and then final d and final mse for each outer loop
 ```
 # Problem 4
-## 4
+## 4.a
 ```{R, warning=FALSE}
 # initialize data
 p = 4
@@ -195,19 +195,18 @@ k_max = 5
 n = nrow(prob4.df)
 binM = myf(p)
 ids = bin2dec(binM)
-threshold_vec = seq(0, 1, 0.1)
 ROC_df = data.frame(matrix(ncol = length(ids), nrow = n), Y=prob4.df$Y)
 colnames(ROC_df) = c(ids, "Y")
-
 
 # loop through models
 feature_names = c("X1","X2","X3","X4")
 features_vec = c()
 mean_mcr_vec = c()
-for(i in ids){
+for(i in seq(1:length(ids))){
+  
   # select subset of data
-  gamma = binM[i+1,]
-  alpha = ids[i+1]
+  gamma = binM[i,]
+  alpha = ids[i]
   X = data.frame(Intercept=1, prob4.df[,-5][,gamma==1])
   Y = prob4.df$Y
   data_df = data.frame(Y, X)
@@ -224,18 +223,16 @@ for(i in ids){
   inds.part = myCVids(n, 5, seed=0)
   # loop through folds
   mcr_vec = c()
-  valid_vec_lst = list()
   for(k in seq(1:k_max)){
     isk = (inds.part == k)
     valid.k = which(isk)
     train.k = which(!isk)
-    append(valid_vec_lst, valid.k)
-    
+
     # train logistic regression model
     glm.fit = glm(Y ~ 0 +.,
                  family=binomial,
                  data=as.data.frame(data_df[train.k,]))
-    # print(summary(glm.fit))
+    print(summary(glm.fit))
     
     # predict target on validation data  
     pred = predict(glm.fit , data_df[valid.k,])
@@ -244,29 +241,10 @@ for(i in ids){
     # calculate mis-classification error rate for default 0.5 threshold
     mcr = MCR(target=data_df[valid.k,]$Y, predicted=pred, threshold=0.5)
     mcr_vec = c(mcr_vec, mcr)
-#####################################################
-# get full pred_Y from folds
-# get MCR at different thresholds for Y vs Y_pred
-
-#####################################################       
-    # ROC curve threshold loop
-    # mcr_t_vec = c()
-    # for(j in seq(1:length(threshold_vec))){
-    #   t = threshold_vec[j]
-    #   mcr_t = MCR(target=data_df[valid.k,]$Y, predicted=pred, threshold=t)
-    #   mcr_t_vec = c(mcr_t_vec, mcr_t)
-    #   ROC_df[valid.k,] = mcr_t_vec
-    # }
-    # mcr_t_df = data.frame(mcr_t_vec)
-    # rownames(mcr_t_df) = threshold_vec
-    # ROC_df[valid.k,j] = mcr_t_df
-#####################################################    
   }
   mean_mcr = mean(mcr_vec)
   mean_mcr_vec = c(mean_mcr_vec, mean_mcr)
 }
-
-
 
 # add data to a data frame
 res_df = data.frame(ids,
@@ -278,6 +256,43 @@ rownames(res_df) = NULL
 knitr::kable(res_df, format = "markdown")
 
 print(res_df[1,])
+```
+
+## 4.b
+```{R}
+# set threshold resolution for ROC curve
+threshold_vec = seq(0, 1, 0.1)
+best_model = res_df[1,1]
+k_max = 5
+
+# data of best model
+Y_pred = ROC_df[,best_model+1]
+Y = ROC_df[,ncol(ROC_df)]
+
+# looping hrough the folds seem to not be he way they want it.
+# create ROC curve for the best model
+inds.part = myCVids(n, 5, seed=0)
+for(k in seq(1:k_max)){
+  isk = (inds.part == k)
+  valid.k = which(isk)
+  
+  pred <- prediction(Y_pred[valid.k], Y[valid.k])
+  perf <- performance(pred,'tpr','fpr')
+  plot(perf,
+       lwd=2,
+       main='ROC curves from 5-fold cross-validation')
+}
+
+
+
+# this way seems to be the correct one
+pred <- prediction(Y_pred, Y)
+perf <- performance(pred,'tpr','fpr')
+
+
+plot(perf,
+     lwd=2,
+     main='ROC curves from 5-fold cross-validation')
 ```
 
 
