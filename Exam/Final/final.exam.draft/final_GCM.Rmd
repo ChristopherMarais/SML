@@ -19,6 +19,40 @@ if (r > 0) {ids = c(ids, sample(K,r))}
 ids
 }
 
+# function to generate all subsets of the set (1,2,...,p)
+myf <- function(p) {
+  out = matrix(c(0,1),nrow=2);
+  if (p > 1) {
+    for (i in (1:(p-1))) {
+      d = 2^i
+      o1 = cbind(rep(0,d),out)
+      o2 = cbind(rep(1,d),out)
+      out = rbind(o1,o2)
+    }
+  }
+  colnames(out) <- c(2^((p-1):0)); # powers for binary expansion
+  # colnames(out) <- c()
+  out
+}
+
+nbSubsets <- function(p,m) {
+  M  = myf(p)
+  rs = rowSums(M)
+  ii = (rs == m)
+  (M[ii,])
+}
+
+# function to convert binary representation to decimal representation 
+bin2dec <- function(binM) {
+  dd = dim(binM);  # nrows and ncols
+  p = dd[2]-1      # max power; 
+  d = rep(0,dd[1]) # initialize placeholder for the answer
+  for (i in 1:(p+1)) {
+    d = d + 2^(p+1-i)*binM[,i]
+  }
+  d
+}
+
 load('final.test.v1.Rdata')
 ```
 
@@ -140,8 +174,22 @@ for(k_i in seq(k)){
 # Problem 4
 ## 4.a
 ```{R}
+# initialize data
+p = 4
 
+binM = myf(p)
+ids = bin2dec(binM)
 
+# edit this line so it works
+glm(Y ~ X[,gamma==1], family=binomial, data=prob4.df)
+
+# perform 5fold CV
+
+# plot of the CV estimates of the test misclassification error 
+# rate versus model id, as well as the
+# selected covariates in the best model
+
+ids
 ```
 
 ## 4.b
