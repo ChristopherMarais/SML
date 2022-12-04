@@ -57,6 +57,20 @@ load('final.test.v1.Rdata')
 ```
 
 
+## My functions
+```{R}
+# functions
+MCR <- function(target, predicted){
+  # Mis-classification ratio calculation
+  if(length(target)!=length(predicted)){
+    print("ERROR: predictions and targets not of the same shape!")
+  }else{
+    mcr = sum(predicted != target)/length(target)
+    return(mcr)
+  }
+}
+```
+
 # Problem 1
 ## 1.1
 ```{R}
@@ -176,20 +190,29 @@ for(k_i in seq(k)){
 ```{R}
 # initialize data
 p = 4
-
 binM = myf(p)
 ids = bin2dec(binM)
 
-# edit this line so it works
-glm(Y ~ X[,gamma==1], family=binomial, data=prob4.df)
+# loop through models
+gamma = binM[4,]
+alpha = ids[4]
+X = prob4.df[,gamma==1]
+Y = prob4.df$Y
+data_df = data.frame(Y, X)
+
+# logistic regression
+glm.fit = glm(Y ~., 
+             family=binomial, 
+             data=data_df)
 
 # perform 5fold CV
 
 # plot of the CV estimates of the test misclassification error 
 # rate versus model id, as well as the
 # selected covariates in the best model
-
-ids
+alpha
+colnames(X)
+mcr = MCR(target = t, predicted = p)
 ```
 
 ## 4.b
