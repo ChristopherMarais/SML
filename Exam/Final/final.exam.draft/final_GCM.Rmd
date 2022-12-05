@@ -5,6 +5,7 @@ output: pdf_document
 fontsize: 11pt
 geometry: margin=2cm
 ---
+
 # Exam code, data, and libraries
 ```{R}
 # functions
@@ -55,13 +56,14 @@ bin2dec <- function(binM) {
 }
 
 # data
-load('final.test.v1.Rdata')
+load('SML.2022.final.Rdata')
 
 # libraries
 library(ROCR)
 library(glmnet)
 library(randomForest)
 library(gbm)
+library(e1071)
 ```
 
 
@@ -188,6 +190,9 @@ for(k_i in seq(k)){
 # Report mse and d for outer loop
 # report mse and d for inner loop
 # group them together print dataframe and then final d and final mse for each outer loop
+
+"Discuss: potential drawbacks of this approach extended to other ML techniques.
+"
 ```
 # Problem 4
 ## 4.a
@@ -259,6 +264,9 @@ rownames(res_df) = NULL
 knitr::kable(res_df, format = "markdown")
 
 print(res_df[1,])
+
+"Report: plot of the CV estimates of the test misclassification error rate versus model id, as well as the
+selected covariates in the best model."
 ```
 
 ## 4.b
@@ -298,11 +306,17 @@ plot(perf,
 # print best threshold
 # show diagonal
 
+"For your best model, use 5-fold CV (same folds as in problem 4a) to construct the ROC curve plot. Your
+vector of predicted values for the ROC curve plot should be produced by training the best model on subset
+Ti and predicting on Vi. To get the entire vector of predicted values, put the 5 vectors of predicted values
+into a single vector; then compare vs truth (the whole vector Y ) proceeding as with the usual ROC curve
+plot construction (reuse the code examples from the ISLR book)."
+
 ```
 
 
 # Problem 5
-```{R}
+```{R, warning=FALSE, message = FALSE}
 p=50
 n = nrow(prob5.df)
 test_df = prob5.df[401:800,]
@@ -385,77 +399,107 @@ for(set in data_set_vec){
 # Discuss what you expect: (i) as training sample size increases but the test  
 # sample is held fixed; (ii) training
 # set is held fixed but the test sample size increases.
+
+
+"For each method, report 3 CV RMSE curves (one curve for each n=100,200 and 400), overlaid on the
+same plot. Mark the optimal value of the CV RMSE and the corresponding value of the tuning parameter.
+Additionally, report the 3-by-6 matrix with rows corresponding to the three ML methods and columns
+corresponding to the CV RMSE and test RMSE for each value of n for model with parameters chosen by
+CV. (I.e., two RMSE values for n = 100, then the two RMSE values for n = 200, etc.) The CV RMSE
+will be computed from the training data only. The test RMSE should be computed by fitting the model
+on the entire training dataset with parameters determined by the CV; then this model is used to predict
+on the test set.
+Briefly discuss your findings; particularly, as n increases.
+For RF and GBM, report and discuss variable importance (for the best models).
+Discuss what you expect: (i) as training sample size increases but the test sample is held fixed; (ii) training
+set is held fixed but the test sample size increases."
 ```
 
 ```{R}
-# Bonus: Suppose another 50 predictors are added (uncorrelated with the response) 
-# so that we now have
-# 100 predictors. What do you expect to happen to the predictive performance of 
-# the methods? Explore by
-# simulating extra columns, generated as iid Uniform(-1,1).
+# generate additional 50 features
+data_df = data.frame(prob5.df, matrix( rnorm(n*50,mean=0,sd=1), n, 50))
 
-p=50
-n = nrow(prob5.df)
-test_df = prob5.df[401:800,]
-data_set_vec = c(100, 200, 400)
-k_max = 5
+# repeat 5 and see effect
 
-# loop through sets of data
-for(set in data_set_vec){
-  # specify training data set
-  train_df = prob5.df[1:set,]
-  # perform 5-fold CV
-  set_n = nrow(train_df)
-  inds.part = myCVids(set_n, 5, seed=0)
-  mcr_vec = c()
-  for(k in seq(1:k_max)){
-    isk = (inds.part == k)
-    valid.k = which(isk)
-    train.k = which(!isk)
-    cv_train_df = train_df[train.k,]
-    cv_valid_df = train_df[valid.k,]
-    x_cv_train_df = model.matrix(Y~., cv_train_df )[,-1]
-    y_cv_train_df = cv_train_df$Y
-    
-    # train LR
-    set.seed(0)
-    lasso_reg.fit = glmnet(x_cv_train_df,y_cv_train_df, alpha=1)
-    
-    # train RF
-    set.seed(0)
-    rf.fit = randomForest(Y~., 
-                          data=cv_train_df, 
-                          mtry=c(1:7,50),
-                          ntree=500,
-                          importance=TRUE)
-    
-    # train GBM
-    set.seed(0)
-    gbm.fit = gbm(Y~., 
-                  data=cv_train_df,
-                  distribution="gaussian",
-                  n.trees=1000,
-                  shrinkage=0.01, 
-                  interaction.depth=7) # use 1:7 or test all or just one (7)
-    
-    # eval LR
-    
-    # eval RF
-    
-    # eval GBM
-    
-    
-}
-
-
-  
-  
-}
-
-
+# What do you expect to happen to the predictive performance of 
+# the methods?
 ```
 
 # Problem 6
-```{R}
- sqrt(mean((y_cv_valid_df - lr_pred)^2))
+```{R, warning=FALSE}
+# define data
+p =20
+n = 200
+train_df = prob6.df[1:200,]
+test_df = prob6.df[201:400,]
+
+# 5-fold validation
+inds.part = myCVids(n, 5, seed=0)
+svm_rmse_vec = c()
+rf_rmse_vec = c()
+gbm_rmse_vec = c()
+for(k in seq(1:k_max)){
+  isk = (inds.part == k)
+  valid.k = which(isk)
+  train.k = which(!isk)
+  cv_train_df = train_df[train.k,]
+  cv_valid_df = train_df[valid.k,]
+  y_cv_valid_df = cv_valid_df$Y
+  
+  # train SVM
+  set.seed(0)
+  svm.fit = svm(Y~., 
+                data=cv_train_df, 
+                kernel="radial", 
+                gamma=1,
+                cost=1,
+                type="C")
+  
+  # train RF
+  set.seed(0)
+  rf.fit = randomForest(as.factor(Y)~., 
+                        data=cv_train_df, 
+                        mtry=c(1:7,50),
+                        ntree=500,
+                        importance=TRUE)
+  
+  # train GBM
+  set.seed(0)
+  gbm.fit = gbm(Y~., 
+                data=cv_train_df,
+                distribution="bernoulli",
+                n.trees=1000,
+                shrinkage=0.01, 
+                interaction.depth=7) # use 1:7 or test all or just one (7)
+  
+  # eval SVM
+  svm_pred = predict(svm.fit, cv_valid_df)
+  # svm_rmse_vec = c(svm_rmse_vec, svm_rmse)
+  
+  # eval RF
+  rf_pred = predict(rf.fit, cv_valid_df)
+  # rf_rmse_vec = c(rf_rmse_vec, rf_rmse)
+  
+  # eval GBM
+  gbm_pred = predict(gbm.fit, cv_valid_df)
+  # needs a threshold
+  # gbm_rmse_vec = c(gbm_rmse_vec, gbm_rmse)
+  
+}
+
+# print(mean(svm_rmse_vec))
+# print(mean(rf_rmse_vec))
+# print(mean(gbm_rmse_vec))
+print("____________")
+
+
+"For each method, report CV misclassification error rate (MER) curves; this will be computed without using test data and used to select optimal tuning parameter values. 
+
+Additionally, report the test MER for each classifier with the parameters chosen by CV (the entire training dataset to train the model with this set of tuning parameters, then predictions are made for the test data to determine MER).
+
+Lastly, overlay on the same plot ROCR curves for the three classifiers (with optimal tuning parameters). Here, the ROCR curves will be constructed using test data.
+
+Briefly discuss.
+"
+
 ```
