@@ -59,6 +59,9 @@ load('final.test.v1.Rdata')
 
 # libraries
 library(ROCR)
+library(glmnet)
+library(randomForest)
+library(gbm)
 ```
 
 
@@ -283,8 +286,6 @@ for(k in seq(1:k_max)){
        main='ROC curves from 5-fold cross-validation')
 }
 
-
-
 # this way seems to be the correct one
 pred <- prediction(Y_pred, Y)
 perf <- performance(pred,'tpr','fpr')
@@ -293,15 +294,168 @@ perf <- performance(pred,'tpr','fpr')
 plot(perf,
      lwd=2,
      main='ROC curves from 5-fold cross-validation')
+
+# print best threshold
+# show diagonal
+
 ```
 
 
 # Problem 5
 ```{R}
+p=50
+n = nrow(prob5.df)
+test_df = prob5.df[401:800,]
+data_set_vec = c(100, 200, 400)
+k_max = 5
+
+# loop through sets of data
+for(set in data_set_vec){
+  # specify training data set
+  train_df = prob5.df[1:set,]
+  # perform 5-fold CV
+  set_n = nrow(train_df)
+  inds.part = myCVids(set_n, 5, seed=0)
+  lr_rmse_vec = c()
+  rf_rmse_vec = c()
+  gbm_rmse_vec = c()
+  for(k in seq(1:k_max)){
+    isk = (inds.part == k)
+    valid.k = which(isk)
+    train.k = which(!isk)
+    cv_train_df = train_df[train.k,]
+    cv_valid_df = train_df[valid.k,]
+    x_cv_train_df = model.matrix(Y~., cv_train_df )[,-1]
+    y_cv_train_df = cv_train_df$Y
+    x_cv_valid_df = model.matrix(Y~., cv_valid_df )[,-1]
+    y_cv_valid_df = cv_valid_df$Y
+    
+    # train LR
+    set.seed(0)
+    lasso_reg.fit = glmnet(x_cv_train_df,y_cv_train_df, alpha=1)
+    
+    # train RF
+    set.seed(0)
+    rf.fit = randomForest(Y~., 
+                          data=cv_train_df, 
+                          mtry=c(1:7,50),
+                          ntree=500,
+                          importance=TRUE)
+    
+    # train GBM
+    set.seed(0)
+    gbm.fit = gbm(Y~., 
+                  data=cv_train_df,
+                  distribution="gaussian",
+                  n.trees=1000,
+                  shrinkage=0.01, 
+                  interaction.depth=7) # use 1:7 or test all or just one (7)
+    
+    # eval LR
+    lr_pred = predict(lasso_reg.fit, x_cv_valid_df)
+    lr_rmse = sqrt(mean((y_cv_valid_df - lr_pred)^2))
+    lr_rmse_vec = c(lr_rmse_vec, lr_rmse)
+    
+    # eval RF
+    rf_pred = predict(rf.fit, cv_valid_df)
+    rf_rmse = sqrt(mean((y_cv_train_df - rf_pred)^2))
+    rf_rmse_vec = c(rf_rmse_vec, rf_rmse)
+    
+    # eval GBM
+    gbm_pred = predict(gbm.fit, cv_valid_df)
+    gbm_rmse = sqrt(mean((y_cv_train_df - gbm_pred)^2))
+    gbm_rmse_vec = c(gbm_rmse_vec, gbm_rmse)
+    
+  }
+  print(set)
+  print(mean(lr_rmse_vec))
+  print(mean(rf_rmse_vec))
+  print(mean(gbm_rmse_vec))
+  print("____________")
+  
+  
+  
+}
+
+# find parameters that have to get tuned and tune for them. 
+# plots should be tuning parameter and cv rmse
+# use cv as used to tune parameters in Q3
+# calcualte test and cv RMSE and print in table 
+
+# Discuss what you expect: (i) as training sample size increases but the test  
+# sample is held fixed; (ii) training
+# set is held fixed but the test sample size increases.
+```
+
+```{R}
+# Bonus: Suppose another 50 predictors are added (uncorrelated with the response) 
+# so that we now have
+# 100 predictors. What do you expect to happen to the predictive performance of 
+# the methods? Explore by
+# simulating extra columns, generated as iid Uniform(-1,1).
+
+p=50
+n = nrow(prob5.df)
+test_df = prob5.df[401:800,]
+data_set_vec = c(100, 200, 400)
+k_max = 5
+
+# loop through sets of data
+for(set in data_set_vec){
+  # specify training data set
+  train_df = prob5.df[1:set,]
+  # perform 5-fold CV
+  set_n = nrow(train_df)
+  inds.part = myCVids(set_n, 5, seed=0)
+  mcr_vec = c()
+  for(k in seq(1:k_max)){
+    isk = (inds.part == k)
+    valid.k = which(isk)
+    train.k = which(!isk)
+    cv_train_df = train_df[train.k,]
+    cv_valid_df = train_df[valid.k,]
+    x_cv_train_df = model.matrix(Y~., cv_train_df )[,-1]
+    y_cv_train_df = cv_train_df$Y
+    
+    # train LR
+    set.seed(0)
+    lasso_reg.fit = glmnet(x_cv_train_df,y_cv_train_df, alpha=1)
+    
+    # train RF
+    set.seed(0)
+    rf.fit = randomForest(Y~., 
+                          data=cv_train_df, 
+                          mtry=c(1:7,50),
+                          ntree=500,
+                          importance=TRUE)
+    
+    # train GBM
+    set.seed(0)
+    gbm.fit = gbm(Y~., 
+                  data=cv_train_df,
+                  distribution="gaussian",
+                  n.trees=1000,
+                  shrinkage=0.01, 
+                  interaction.depth=7) # use 1:7 or test all or just one (7)
+    
+    # eval LR
+    
+    # eval RF
+    
+    # eval GBM
+    
+    
+}
+
+
+  
+  
+}
+
 
 ```
 
 # Problem 6
 ```{R}
-
+ sqrt(mean((y_cv_valid_df - lr_pred)^2))
 ```
