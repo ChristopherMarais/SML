@@ -121,7 +121,6 @@ MCR <- function(target, predicted, threshold=0.5){
 ```{R}
 # variables
 k = 2
-dim_x = 2
 
 # basic K-means function
 my_kmeans <- function(data, k=2, seed=0){
@@ -148,77 +147,196 @@ my_kmeans <- function(data, k=2, seed=0){
   return(list(centroid_mat, closest_vent_mat))
 }
 
-# get probability from multivariate gaussian
+# get probability from multivariate Gaussian
 dmvnorm <- function(X,mu,sigma) {
     k <- ncol(X)
     rooti <- backsolve(chol(sigma),diag(k))
     quads <- colSums((crossprod(rooti,(t(X)-mu)))^2)
     return(exp(-(k/2)*log(2*pi) + sum(log(diag(rooti))) - .5*quads))
 }
+
+gmm <- function(data, class_vec, mu, k=2, version="v1"){
+  if(version=="v1"){
+    sigma = cov(data)
+    mvn_vec_lst = list()
+    for(k_i in 1:k){
+      mvn_vec = list(dmvnorm(X=data, 
+            mu=mu[k_i,],
+            sigma=sigma))
+      
+      mvn_vec_lst = append(mvn_vec_lst, mvn_vec)
+    }
+    
+    mvn_df = data.frame(mvn_vec_lst)
+    colnames(mvn_df) = 1:k
+    mvn_df$total = rowSums(mvn_df)
+    
+    class_prob_lst = list()
+    for(k_i in 1:k){
+      class_prob_vec = mvn_df[k_i]/mvn_df$total
+      class_prob_lst = append(class_prob_lst, class_prob_vec)
+    }
+    class_prob_df = data.frame(class_prob_lst)
+    colnames(mvn_df) = 1:k
+    class_vec = as.matrix(apply(class_prob_df, 1, which.max))
+    return(list(class_vec, sigma, mu))
+    
+  # version 2 with multiple covariance matrices (one for each class)
+  }else if (version=="v2") {
+    sigma_lst = list()
+    for(k_i in 1:k){
+      class_df = data.frame(data[class_vec==k_i,])
+      sigma = list(cov(class_df))
+      sigma_lst = append(sigma_lst, sigma)
+    }
+    
+    mvn_vec_lst = list()
+    for(k_i in 1:k){
+      mvn_vec = list(dmvnorm(X=data, 
+            mu=mu[k_i,],
+            sigma=sigma_lst[[k_i]]))
+      
+      mvn_vec_lst = append(mvn_vec_lst, mvn_vec)
+    }
+    
+    mvn_df = data.frame(mvn_vec_lst)
+    colnames(mvn_df) = 1:k
+    mvn_df$total = rowSums(mvn_df)
+    
+    class_prob_lst = list()
+    for(k_i in 1:k){
+      class_prob_vec = mvn_df[k_i]/mvn_df$total
+      class_prob_lst = append(class_prob_lst, class_prob_vec)
+    }
+    class_prob_df = data.frame(class_prob_lst)
+    colnames(mvn_df) = 1:k
+    class_vec = as.matrix(apply(class_prob_df, 1, which.max))
+    return(list(class_vec, sigma_lst, mu))
+    
+  }else{
+    print("Version not defined correctly. Use 'v1' OR 'v2'.")
+  }
+  
+}
+
+
+clustering_procedure <- function(data, k=2, seed=0, version="v1"){
+  # initialize clusters with K-means
+  # use v1 for LDA approach and v2 for QDA approach
+  kmeans_result = my_kmeans(data=data, k=k, seed=seed)
+  # get parameters for mixture modelling from k-means clusters
+  mu = kmeans_result[[1]]
+  class_vec = kmeans_result[[2]]
+  
+  # Loop through gmm process until convergence
+  old_class_vec <- class_vec
+  new_class_vec = rep(0, nrow(data))
+  
+  
+  while(identical(new_class_vec,old_class_vec) == FALSE){
+    # calculate mu from new class vector
+    mu = matrix(0, nrow = k, ncol = ncol(mu))
+    for(k_i in 1:k){
+      mu[k_i,] <- colMeans(data[class_vec==k_i,])
+    }
+    
+    gmm_result = gmm(data=data, 
+                        class_vec=class_vec, 
+                        mu=mu, 
+                        k=k, 
+                        version=version)
+    
+    mu = gmm_result[[3]]
+    sigma = gmm_result[[2]]
+    new_class_vec = gmm_result[[1]]
+    old_class_vec <- class_vec
+    class_vec <- new_class_vec
+  }
+  return(list(class_vec, sigma, mu))
+}
+
+
 ```
 
 ## 2.1
 ```{R}
-# calculate variance of 
-
-data_df = data.frame(prob2.list[3])
-
-# gmm portion
-kmeans_res_lst = my_kmeans(data=data_df, k=k, seed=0)
-means_mat = kmeans_res_lst[[1]]
-class_vec = kmeans_res_lst[[2]]
-
-# total covariance or mean covariance of clusters for LDA version?
-cov_mat = cov(data_df) # likely ov for each cluster or mean of covs
-
-# covariance of each cluster
-# cov_lst = list()
-# for(k_i in 1:k){
-#   df = data.frame(data_df[class_vec==k_i,])
-#   cov_mat = list(cov(df))
-#   cov_lst = append(cov_lst, cov_mat)
-# }
-
-sample_i = 199
-c1 = (dmvnorm(X=data_df[sample_i,], 
-        mu=means_mat[1,],
-        sigma=cov_mat))
-
-c2 = (dmvnorm(X=data_df[sample_i,], 
-        mu=means_mat[2,],
-        sigma=cov_mat))
-
-c_all = c1+c2
-print(paste(c1, c2, c1/c_all, c2/c_all, class_vec[sample_i]))
 
 
-
-#use sqrt of var in table for each
-# log dnorm
-# log(dnorm(-3, mean=means_mat[1,1], sd=sqrt(cov_lst[1][1])))
 ```
 
 ```{R}
-
-
 
 ```
 
 ## 2.2
 ```{R}
+mvpdf <- function(x, mu, sigma) {
+    if (det(sigma) == 0) {
+        warning("Determinant is equal to 0.")
+    }
+    apply(x, 1, function(x) exp(-(1/2) * (t(x) - mu) %*% MASS::ginv(sigma) %*% 
+        t(t(x) - mu))/sqrt(det(2 * pi * sigma)))
+}
 
+#############################
+for(i in 1:7){
+  df=data.frame(prob2.list[[i]])
+  mcl.model <- Mclust(df, 2)
+  plot(mcl.model, what = "classification", main = "Mclust Classification")
+}
+
+
+# initialk <- mclust::hc(data = df, modelName = "EII")
+# initialk <- mclust::hclass(initialk, 2)
+# mu <- split(df[, 1:2], initialk)
+# mu <- t(sapply(mu, colMeans))
+# cov_mat <- cov(df)#list(diag(4), diag(4))
+# 
+# # Mixing Components
+# a <- runif(2)
+# a <- a/sum(a)
+# 
+# # Calculate PDF with class means and covariances.
+# z <- cbind(mvpdf(x = df, mu = mu[1, ], sigma = cov_mat), 
+#            mvpdf(x = df, mu = mu[2, ], sigma = cov_mat))
+# 
+# # Expectation Step for each class.
+# r <- cbind((a[1] * z[, 1])/rowSums(t((t(z) * a))), 
+#            (a[2] * z[, 2])/rowSums(t((t(z) * a))))
+# 
+# # Choose the highest rowwise probability
+# eK <- factor(apply(r, 1, which.max))
+# 
+# # Total Responsibility
+# mc <- colSums(r)
+# # Update Mixing Components.
+# a <- mc/NROW(df)
+# # Update our Means
+# mu <- rbind(colSums(df[, 1:2] * r[, 1]) * 1/mc[1], 
+#             colSums(df[, 1:2] * r[, 2]) * 1/mc[2])
+# # Update Covariance matrix.
+# cov_mat <- t(r[, 1] * t(apply(df[, 1:2], 1, function(x) x - mu[1, ]))) %*% 
+#     (r[, 1] * t(apply(df[, 1:2], 1, function(x) x - mu[1, ]))) * 1/mc[1]
 
 ```
 
 ## 2.3
-```{R}
+```{R, echo=FALSE,out.width="33%"}
 # plot data
+seed=0
 for( i in seq(1:length(prob2.list))){
-  kmeans_res_lst = my_kmeans(data=data_df, k=k, seed=0)
-  plot(data.frame(prob2.list[i]), col=kmeans_res_lst[2])  
+  df=data.frame(prob2.list[[i]])
+  res_kmeans = my_kmeans(data=df, k=2, seed=seed)
+  res_v1 = clustering_procedure(data=df, k=2, seed=seed, version="v1")
+  res_v2 = clustering_procedure(data=df, k=2, seed=seed, version="v2")
+  # plot(x=df[,1],y=df[,2],col=res_kmeans[[2]],main="kmeans")
+  # plot(x=df[,1],y=df[,2],col=res_v1[[1]],main="v1")
+  plot(x=df[,1],y=df[,2],col=res_v2[[1]],main="v2")
 }
-
 ```
+
+
+
 
 # Problem 3
 ```{R}
