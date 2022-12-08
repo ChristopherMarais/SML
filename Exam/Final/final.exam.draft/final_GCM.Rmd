@@ -58,12 +58,16 @@ bin2dec <- function(binM) {
 # data
 load('SML.2022.final.Rdata')
 
-# libraries
+# libraries used in textbook
 library(ROCR)
 library(glmnet)
 library(randomForest)
 library(gbm)
 library(e1071)
+library(MASS)
+
+# libraries for ease of use
+library(pdist) # pdist() can be replaced by dist() but dist() is slower
 ```
 
 
@@ -115,6 +119,100 @@ MCR <- function(target, predicted, threshold=0.5){
 
 # Problem 2
 ```{R}
+# variables
+k = 2
+dim_x = 2
+
+# basic K-means function
+my_kmeans <- function(data, k=2, seed=0){
+  # initialize centroids from data
+  set.seed(seed)
+  centroid_mat <- data[sample(nrow(data), k), ]
+  old_centroid_mat <- centroid_mat
+  new_centroid_mat = matrix(0, nrow = k, ncol = ncol(centroid_mat))
+  # repeat until convergence or iteration limit
+  while(identical(old_centroid_mat, new_centroid_mat)==FALSE){
+    # calculate euclidean distance between centroids and all points
+    dist_mat <- t(as.matrix(pdist(centroid_mat, data)))
+    # assign each point a class based on closest centroid
+    closest_vent_mat = as.matrix(apply(dist_mat, 1, which.min))
+    # calculate new centroids as mean of each class
+    for(k_i in 1:k){
+      new_centroid_mat[k_i,] <- colMeans(data[closest_vent_mat==k_i,])
+    }
+    old_centroid_mat <- centroid_mat
+    centroid_mat <- new_centroid_mat
+  
+  }
+  
+  return(list(centroid_mat, closest_vent_mat))
+}
+```
+
+## 2.1
+```{R}
+
+```
+
+```{R}
+# basic K-means function
+my_kmeans <- function(data, k=2, seed=0){
+  # initialize centroids from data
+  set.seed(seed)
+  centroid_mat <- data[sample(nrow(data), k), ]
+  old_centroid_mat <- centroid_mat
+  new_centroid_mat = matrix(0, nrow = k, ncol = ncol(centroid_mat))
+  # repeat until convergence or iteration limit
+  while(identical(old_centroid_mat, new_centroid_mat)==FALSE){
+    # calculate euclidean distance between centroids and all points
+    dist_mat <- t(as.matrix(pdist(centroid_mat, data)))
+    # assign each point a class based on closest centroid
+    closest_vent_mat = as.matrix(apply(dist_mat, 1, which.min))
+    # calculate new centroids as mean of each class
+    for(k_i in 1:k){
+      new_centroid_mat[k_i,] <- colMeans(data[closest_vent_mat==k_i,])
+    }
+    old_centroid_mat <- centroid_mat
+    centroid_mat <- new_centroid_mat
+  }
+  return(list(centroid_mat, closest_vent_mat))
+}
+
+# calculate variance of 
+k=2
+data_df = data.frame(prob2.list[1])
+
+# gmm portion
+kmeans_res_lst = my_kmeans(data=df, k=k, seed=0)
+means_mat = kmeans_res_lst[[1]]
+class_vec = kmeans_res_lst[[2]]
+# total covariance or mean covariance of clusters for LDA version?
+# covariance of each cluster
+cov_vec = c()
+for(k_i in 1:k){
+  df = data_df[class_vec==k_i,]
+  cov_num = cov( df[2], df[1])[1]
+  cov_vec = c(cov_vec, cov_num)
+}
+data_df[1,2]
+
+log(dnorm(-3, mean=means_mat[1,1], sd=sqrt(sqrt(cov_vec[1]**2))))
+mvrnorm(3, 0, 1)
+# look at link in telegram
+
+```
+
+## 2.2
+```{R}
+
+```
+
+## 2.3
+```{R}
+# plot data
+for( i in seq(1:length(prob2.list))){
+  plot(data.frame(prob2.list[i]))  
+}
 
 ```
 
