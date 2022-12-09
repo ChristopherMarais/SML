@@ -410,9 +410,9 @@ for( i in seq(1:length(prob2.list))){
 
 # Problem 3
 ```{R}
-# initialize information
+# initialize parameters
 k = 5
-d_max = 10
+d_max = 20
 
 # Mode function
 Mode <- function(x) {
@@ -470,19 +470,21 @@ for(k_i in seq(k)){
   # use mode_d to retrain polynomial model on data in outer CV
   lm.fit.i = lm(y ~ poly(x, mode_d), data = data.train.i)
   mse_i = mean((data.valid.i$y - predict(lm.fit.i , data.valid.i))^2)
-  
+  print(paste(mode_d,mse_i))
   # estiamte performance
-  print(paste(mode_d, mse_i))
-}
+  print(d_mse_opt_df)
 
-# should model be trained in outer and inner loop? yes
+  }
+
+# move parameter loop outside of inner cv loop!!!!!!!!!!!!!!!!!!!
 # potential drawbacks are computation time
 # Report mse and d for outer loop
 # report mse and d for inner loop
 # group them together print dataframe and then final d and final mse for each outer loop
 
-"Discuss: potential drawbacks of this approach extended to other ML techniques.
-"
+# "Discuss: potential drawbacks of this approach extended to other ML techniques.
+# "
+
 ```
 # Problem 4
 ## 4.a
