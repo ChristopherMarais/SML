@@ -260,24 +260,94 @@ clustering_procedure <- function(data, k=2, seed=0, version="v1"){
 
 ## 2.1
 ```{R}
+df = data.frame(prob2.list[[5]])
+k=2
+seed=0
+# Multivariate Gaussian
+dmvnorm <- function(X,mu,sigma) {
+    k <- ncol(X)
+    rooti <- backsolve(chol(sigma),diag(k))
+    quads <- colSums((crossprod(rooti,(t(X)-mu)))^2)
+    return(exp(-(k/2)*log(2*pi) + sum(log(diag(rooti))) - .5*quads))
+}
+
+##################################
+#### initialize parameters
+kmeans_result = my_kmeans(data=df, k=k, seed=seed)
+# get parameters for mixture modelling from k-means clusters
+# get mu from K-means
+mu = kmeans_result[[1]]
+# get class vector from K-means
+class_vec = kmeans_result[[2]]
+# Sigma from data # use sigma list if v2/QDA
+sigma_lst = list()
+for(i_c in 1:k){
+  class_df = data.frame(df[class_vec==i_c,])
+  sigma = list(cov(class_df))
+  sigma_lst = append(sigma_lst, sigma)
+}
+# sigma = cov(df)
+# get pi from data
+pi_vec = c()
+for(i_c in 1:k){
+  pi = mean(class_vec==i_c)
+  pi_vec = c(pi_vec, pi)
+}
+log_likelihood_lst = list()
+
+#### Estimate class probabilities
+mvn_lst = list()
+for(i_c in 1:k){
+  mvn_ic = list(pi_vec[i_c]*dmvnorm(X=df,mu=mu[i_c,], sigma=sigma_lst[[i_c]])) #* sigma_lst
+  mvn_lst = append(mvn_lst, mvn_ic)
+}
+mvn_df = data.frame(mvn_lst)
+colnames(mvn_df) = 1:k
+mvn_df$total = rowSums(mvn_df)
+
+ri_lst = list()
+for(i_c in 1:k){
+  ri_vec = mvn_df[i_c]/mvn_df$total
+  ri_lst = append(ri_lst, ri_vec)
+}
+ri_df = data.frame(ri_lst)
+class_vec = as.matrix(apply(ri_df, 1, which.max))
+
+#### Update parameters and calculate maximum likelihood
+for(i_c in 1:k){
+  pi = mean(class_vec==i_c)
+  pi_vec = c(pi_vec, pi)
+  
+  mu[i_c,] <- colMeans(df[class_vec==i_c,])
+}
+
+sigma_lst = list()
+for(i_c in 1:k){
+  class_df = data.frame(df[class_vec==i_c,])
+  sigma = list(cov(class_df))
+  sigma_lst = append(sigma_lst, sigma)
+}
+
+# calcualte log likelihood
+log_likelihood = 0
+for(i_c in 1:k){
+  log_likelihood = log_likelihood + log(sum(dmvnorm(X=df[class_vec==i_c,],
+                                                    mu=mu[i_c,], 
+                                                    sigma=sigma_lst[[i_c]]))) #* sigma_lst
+}
+
+log_likelihood_lst = append(log_likelihood_lst, log_likelihood)
 
 
 ```
 
 ```{R}
 
+plot(x=df[,1],y=df[,2],col=class_vec,main="v2")
 ```
 
 ## 2.2
 ```{R}
-mvpdf <- function(x, mu, sigma) {
-    if (det(sigma) == 0) {
-        warning("Determinant is equal to 0.")
-    }
-    apply(x, 1, function(x) exp(-(1/2) * (t(x) - mu) %*% MASS::ginv(sigma) %*% 
-        t(t(x) - mu))/sqrt(det(2 * pi * sigma)))
-}
-
 #############################
 for(i in 1:7){
   df=data.frame(prob2.list[[i]])
