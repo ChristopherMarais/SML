@@ -271,14 +271,15 @@ dmvnorm <- function(X,mu,sigma) {
     return(exp(-(k/2)*log(2*pi) + sum(log(diag(rooti))) - .5*quads))
 }
 
+
 ##################################
 #### initialize parameters
 kmeans_result = my_kmeans(data=df, k=k, seed=seed)
 # get parameters for mixture modelling from k-means clusters
 # get mu from K-means
-mu = kmeans_result[[1]]
+mu = matrix(c(-1,2,2,0.5), nrow=2)#kmeans_result[[1]] ###############
 # get class vector from K-means
-class_vec = kmeans_result[[2]]
+class_vec = matrix(sample(1:2, size=400, replace=TRUE)) # kmeans_result[[2]] ###############
 # Sigma from data # use sigma list if v2/QDA
 sigma_lst = list()
 for(i_c in 1:k){
@@ -294,7 +295,7 @@ for(i_c in 1:k){
   pi_vec = c(pi_vec, pi)
 }
 log_likelihood_lst = list()
-
+##################################
 #### Estimate class probabilities
 mvn_lst = list()
 for(i_c in 1:k){
@@ -338,12 +339,14 @@ for(i_c in 1:k){
 
 log_likelihood_lst = append(log_likelihood_lst, log_likelihood)
 
+plot(x=df[,1],y=df[,2],col=class_vec,main="v2")
 
 ```
 
 ```{R}
 
-plot(x=df[,1],y=df[,2],col=class_vec,main="v2")
+
+
 ```
 
 ## 2.2
