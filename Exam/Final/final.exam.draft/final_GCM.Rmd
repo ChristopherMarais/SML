@@ -115,9 +115,9 @@ As q approaches 1, the TPR and FPR of the classifier will both approach 1. This 
 Overall, the performance of the classifier is directly influenced by the proportion of cases in the population. As the proportion of cases increases, the TPR and FPR of the classifier will also increase.
 
 ## 1.6
-If a ridge regression model is fitted to a dataset with n = 50 and p = 40 covariates, it is unlikely that the optimal shrinkage parameter λ will be equal to 0. This is because the sample size is relatively small compared to the number of covariates, and the true coefficients are known to be nonzero. In this situation, using a non-zero value of λ can help to regularize the model and prevent over fitting by reducing the magnitude of the estimated coefficients.
-If the sample size n is increased using the same data-generating mechanism, it is likely that the optimal value of λ will decrease. This is because increasing the sample size will provide more information about the true coefficients, and the model will be able to fit the data more accurately without regularization. As a result, a smaller value of λ will be sufficient to prevent overfitting, and the optimal value of λ will decrease.
-Overall, the optimal value of λ for a ridge regression model depends on the sample size, the number of covariates, and the true coefficients in the data. In general, a larger sample size and a smaller number of covariates will result in a smaller optimal value of λ, while a smaller sample size and a larger number of covariates will result in a larger optimal value of λ.
+If a ridge regression model is fitted to a dataset with n = 50 and p = 40 covariates, it is unlikely that the optimal shrinkage parameter $\lambda$ will be equal to 0. This is because the sample size is relatively small compared to the number of covariates, and the true coefficients are known to be nonzero. In this situation, using a non-zero value of $\lambda$ can help to regularize the model and prevent over fitting by reducing the magnitude of the estimated coefficients.
+If the sample size n is increased using the same data-generating mechanism, it is likely that the optimal value of $\lambda$ will decrease. This is because increasing the sample size will provide more information about the true coefficients, and the model will be able to fit the data more accurately without regularization. As a result, a smaller value of $\lambda$ will be sufficient to prevent overfitting, and the optimal value of $\lambda$ will decrease.
+Overall, the optimal value of $\lambda$ for a ridge regression model depends on the sample size, the number of covariates, and the true coefficients in the data. In general, a larger sample size and a smaller number of covariates will result in a smaller optimal value of $\lambda$, while a smaller sample size and a larger number of covariates will result in a larger optimal value of $\lambda$.
 
 # Problem 2
 ```{R}
@@ -345,11 +345,6 @@ plot(x=df[,1],y=df[,2],col=class_vec,main="v2")
 
 ```
 
-```{R}
-
-
-
-```
 
 ## 2.2
 ```{R}
