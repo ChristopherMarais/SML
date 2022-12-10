@@ -410,17 +410,97 @@ for( i in seq(1:length(prob2.list))){
 
 # Problem 3
 ```{R}
+# # initialize parameters
+# k = 5
+# d_max = 20
+# 
+# # Mode function
+# Mode <- function(x) {
+#   ox <- order(x)
+#   ux <- unique(ox)
+#   ux[which.max(tabulate(match(x, ux)))]
+# }
+# 
+# # Outer CV to estimate performance (seed=0)
+# n_i = nrow(prob3.df)
+# for(k_i in seq(k)){
+#   inds.part = myCVids(n=n_i, K=k, seed=0)
+#   isk = (inds.part == k_i)
+#   valid.i = which(isk)
+#   train.i = which(!isk)
+#   # split data into train and test sets
+#   data.valid.i = prob3.df[valid.i,]
+#   rownames(data.valid.i) <- NULL
+#   data.train.i = prob3.df[train.i,]
+#   rownames(data.train.i) <- NULL
+#   
+#   # Inner CV to estimate parameters (seed=1000)
+#   n_j = nrow(data.train.i)
+#   d_opt_vec = c()
+#   mse_opt_vec = c()
+#   for(k_j in seq(k)){
+#     inds.part = myCVids(n=n_j, K=k, seed=1000)
+#     isk = (inds.part == k_j)
+#     valid.j = which(isk)
+#     train.j = which(!isk)
+#     # split data into train and test sets
+#     data.valid.j = data.train.i[valid.j,]
+#     data.train.j = data.train.i[train.j,]
+# 
+#     # test different parameters (d)
+#     lm_results <- lapply(1:d_max, function(d) lm(y ~ poly(x, d), data = data.train.j))
+#     mse_vec = c()
+#     for(d in seq(d_max)){
+#       lm.fit.j = lm_results[[d]]
+#       mse_j = mean((data.valid.j$y - predict(lm.fit.j , data.valid.j))^2)
+#       mse_vec = c(mse_vec, mse_j)
+#     }
+#     d_opt = which.min(mse_vec)
+#     mse_opt = min(mse_vec)
+#     d_opt_vec = c(d_opt_vec, d_opt)
+#     mse_opt_vec = c(mse_opt_vec, mse_opt)
+#     
+#     d_mse_opt_df = data.frame(d_opt_vec, mse_opt_vec)
+#   }
+#   
+#   # select the mode of parameter d for all inner folds
+#   # if multiple modes, select the smallest value for d
+#   mode_d = Mode(d_mse_opt_df$d_opt_vec)
+#   
+#   # use mode_d to retrain polynomial model on data in outer CV
+#   lm.fit.i = lm(y ~ poly(x, mode_d), data = data.train.i)
+#   mse_i = mean((data.valid.i$y - predict(lm.fit.i , data.valid.i))^2)
+#   print(paste(mode_d,mse_i))
+#   # estiamte performance
+#   print(d_mse_opt_df)
+# 
+#   }
+
+
+
+# "Discuss: potential drawbacks of this approach extended to other ML techniques.
+# "
+
+```
+
+```{R}
 # initialize parameters
 k = 5
-d_max = 20
+d_max = 10
 
-# Mode function
-Mode <- function(x) {
-  ox <- order(x)
-  ux <- unique(ox)
-  ux[which.max(tabulate(match(x, ux)))]
+# function to calculate RMSE
+rmse_func <- function(test, pred){
+  rmse = sqrt(mean((test - pred)^2))
+  return(rmse)
 }
 
+# record data from nested cv
+k_i_vec = c()
+k_j_vec = c()
+d_vec = c()
+rmse_j_vec = c()
+best_d_vec = c()
+rmse_i_vec = c()
 # Outer CV to estimate performance (seed=0)
 n_i = nrow(prob3.df)
 for(k_i in seq(k)){
@@ -428,64 +508,126 @@ for(k_i in seq(k)){
   isk = (inds.part == k_i)
   valid.i = which(isk)
   train.i = which(!isk)
-  # split data into train and test sets
+  # split data into external train and test sets
   data.valid.i = prob3.df[valid.i,]
   rownames(data.valid.i) <- NULL
   data.train.i = prob3.df[train.i,]
   rownames(data.train.i) <- NULL
   
-  # Inner CV to estimate parameters (seed=1000)
-  n_j = nrow(data.train.i)
-  d_opt_vec = c()
-  mse_opt_vec = c()
-  for(k_j in seq(k)){
-    inds.part = myCVids(n=n_j, K=k, seed=1000)
-    isk = (inds.part == k_j)
-    valid.j = which(isk)
-    train.j = which(!isk)
-    # split data into train and test sets
-    data.valid.j = data.train.i[valid.j,]
-    data.train.j = data.train.i[train.j,]
-
-    # test different parameters (d)
-    lm_results <- lapply(1:d_max, function(d) lm(y ~ poly(x, d), data = data.train.j))
-    mse_vec = c()
-    for(d in seq(d_max)){
-      lm.fit.j = lm_results[[d]]
-      mse_j = mean((data.valid.j$y - predict(lm.fit.j , data.valid.j))^2)
-      mse_vec = c(mse_vec, mse_j)
+  # loop through parameter sets
+  rmse_d_vec = c()
+  for(d in 1:d_max){
+    # Inner CV to estimate parameters (seed=1000)
+    n_j = nrow(data.train.i)
+    rmse_j_d_vec = c()
+    for(k_j in seq(k)){
+      inds.part = myCVids(n=n_j, K=k, seed=1000)
+      isk = (inds.part == k_j)
+      valid.j = which(isk)
+      train.j = which(!isk)
+      # split data into train and test sets
+      data.valid.j = data.train.i[valid.j,]
+      data.train.j = data.train.i[train.j,]
+      # train model in internal cv loop
+      lm.fit.j = lm(y ~ poly(x, d), data = data.train.j)
+      pred.j = predict(lm.fit.j , data.valid.j)
+      rmse.j = rmse_func(test=data.valid.j$y, pred=pred.j)
+      rmse_j_vec = c(rmse_j_vec, rmse.j)
+      rmse_j_d_vec = c(rmse_j_d_vec, rmse.j)
+      
+      # record data
+      k_i_vec = c(k_i_vec, k_i)
+      k_j_vec = c(k_j_vec, k_j)
+      d_vec = c(d_vec, d)
     }
-    d_opt = which.min(mse_vec)
-    mse_opt = min(mse_vec)
-    d_opt_vec = c(d_opt_vec, d_opt)
-    mse_opt_vec = c(mse_opt_vec, mse_opt)
+
+    # get mean RMSE for each parameter
+    rmse_d = mean(rmse_j_d_vec)
+    rmse_d_vec = c(rmse_d_vec, rmse_d)
     
-    d_mse_opt_df = data.frame(d_opt_vec, mse_opt_vec)
+    # train external model with selected d
+    lm.fit.i = lm(y ~ poly(x, d), data = data.train.i)
+    pred.i = predict(lm.fit.i , data.valid.i)
+    rmse.i = rmse_func(test=data.valid.i$y, pred=pred.i)
+    rmse_i_vec = c(rmse_i_vec, rmse.i)
+    
   }
   
-  # select the mode of parameter d for all inner folds
-  # if multiple modes, select the smallest value for d
-  mode_d = Mode(d_mse_opt_df$d_opt_vec)
+  # select parameter set with lowest RMSE
+  best_d = (1:d_max)[which(rmse_d_vec == min(rmse_d_vec))]
+  best_d_vec = c(best_d_vec, best_d)
   
-  # use mode_d to retrain polynomial model on data in outer CV
-  lm.fit.i = lm(y ~ poly(x, mode_d), data = data.train.i)
-  mse_i = mean((data.valid.i$y - predict(lm.fit.i , data.valid.i))^2)
-  print(paste(mode_d,mse_i))
-  # estiamte performance
-  print(d_mse_opt_df)
+  # # train external model with selected d
+  # lm.fit.i = lm(y ~ poly(x, best_d), data = data.train.i)
+  # pred.i = predict(lm.fit.i , data.valid.i)
+  # rmse.i = rmse_func(test=data.valid.i$y, pred=pred.i)
+  # rmse_i_vec = c(rmse_i_vec, rmse.i)
+    
+}
 
+
+# organize results into a dataframe
+results_df = data.frame(ki=k_i_vec, kj=k_j_vec, d=d_vec, rmse_j=rmse_j_vec)
+results_df$best_d = 0
+results_df$rmse_i = rmse_i_vec
+for(i_k in 1:k){
+  results_df$best_d[results_df$ki==i_k] = best_d_vec[i_k]
+  # results_df$rmse_i[results_df$ki==i_k] = rmse_i_vec[i_k]
+}
+
+# collect data for curve plots from inner cv loop results
+ki_d_rmse_lst = list()
+for(k_i in 1:k){
+  ki_d_rmse_vec = c()
+  for(d in 1:d_max){
+    ki_d_mean_rmse = mean(
+                      results_df$rmse_j[results_df$ki==k_i & results_df$d==d]
+                      )
+    
+    ki_d_rmse_vec = c(ki_d_rmse_vec, ki_d_mean_rmse)
   }
+  ki_d_rmse_lst = append(ki_d_rmse_lst, list(ki_d_rmse_vec))
+}
+# add data to data frame
+plot_df = data.frame((1:d_max), ki_d_rmse_lst)
+colnames(plot_df) = c("d", as.character(1:k))
 
-# move parameter loop outside of inner cv loop!!!!!!!!!!!!!!!!!!!
-# potential drawbacks are computation time
-# Report mse and d for outer loop
-# report mse and d for inner loop
-# group them together print dataframe and then final d and final mse for each outer loop
+# visualize results as line plots
+{plot(x=plot_df$d, 
+     y=plot_df$`1`, 
+     type="b", 
+     col="black", 
+     lwd=2, 
+     lty=2,
+     ylim=c(min(plot_df[2:5]),max(plot_df[2:5])), 
+     pch=19,
+     ylab="RMSE",
+     xlab="Polynomial degree of  (d)")
+lines(x=plot_df$d, y=plot_df$`1`, col="blue", lwd=2, type="b", pch=19)
+lines(x=plot_df$d, y=plot_df$`2`, col="green", lwd=2, type="b", pch=19)
+lines(x=plot_df$d, y=plot_df$`3`, col="orange", lwd=2, type="b", pch=19)
+lines(x=plot_df$d, y=plot_df$`4`, col="purple", lwd=2, type="b", pch=19)
+lines(x=plot_df$d, y=plot_df$`5`, col="red", lwd=2, type="b", pch=19)}
 
-# "Discuss: potential drawbacks of this approach extended to other ML techniques.
-# "
 
 ```
+
+
+
+```{R}
+
+
+
+
+
+```
+
+
+
+
+
+
+
 # Problem 4
 ## 4.a
 ```{R, warning=FALSE}
