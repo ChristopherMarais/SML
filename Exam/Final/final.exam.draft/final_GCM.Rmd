@@ -687,17 +687,21 @@ for(k in seq(1:k_max)){
   perf <- performance(pred,'tpr','fpr')
   
   
-  # {plot(perf,
-  #      lwd=2,
-  #      main='ROC curve from 5-fold cross-validation')
-  # abline(0,1,lty=2,lwd=2,col="red")}
+  {plot(perf,
+       lwd=2,
+       main='ROC curve from 5-fold cross-validation')
+  abline(0,1,lty=2,lwd=2,col="red")}
   
 }
 
 # this way seems to be the correct one
-pred <- prediction(Y_pred, Y)
-perf <- performance(pred,'tpr','fpr')
+pred = prediction(Y_pred, Y)
+perf = performance(pred,'tpr','fpr')
 
+# get threshold, tpr and fpr values from ROCR
+threshold_df = data.frame(cut=perf@alpha.values[[1]], 
+                      fpr=perf@x.values[[1]], 
+                      tpr=perf@y.values[[1]])
 
 {plot(perf,
      lwd=2,
@@ -706,10 +710,16 @@ perf <- performance(pred,'tpr','fpr')
      ylim=c(0,1))
 abline(0,1,lty=3,lwd=2,col="red")}
 
+# figure out how CV should be used
+  # should we loop and CV to get prediction of all?
+  # use ROCR for CV?
+  # already good enough with what was generated?
+
 # print best threshold
   # get values of tpr and fpr
   # get best spot by measuring distance to top left corner and select closest point
   # alternatively use argmax(tpr-fpr) or argmin(tpr-(1-fpr))
+
 # print all plots on single plot. 
   # add all values to data frame and then plot all in df
   # make different colors
@@ -722,6 +732,7 @@ into a single vector; then compare vs truth (the whole vector Y ) proceeding as 
 plot construction (reuse the code examples from the ISLR book)."
 
 
+str(perf)
 
 ```
 
