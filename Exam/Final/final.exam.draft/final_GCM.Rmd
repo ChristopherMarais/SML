@@ -68,6 +68,7 @@ library(MASS)
 
 # libraries for ease of use
 library(pdist) # pdist() can be replaced by dist() but dist() is slower
+library(tidyr) # just saved some time on filling NA values in a dataframe
 ```
 
 
@@ -301,7 +302,10 @@ log_likelihood_lst = list()
 #### Estimate class probabilities
 mvn_lst = list()
 for(i_c in 1:k){
-  mvn_ic = list(pi_vec[i_c]*my_dmvnorm(X=df,mu=mu[i_c,], sigma=sigma_lst[[i_c]])) #* sigma_lst
+  mvn_ic = list(
+  pi_vec[i_c]*my_dmvnorm(X=df,mu=mu[i_c,], 
+                         sigma=sigma_lst[[i_c]])) #* sigma_lst
+  
   mvn_lst = append(mvn_lst, mvn_ic)
 }
 mvn_df = data.frame(mvn_lst)
@@ -559,7 +563,8 @@ legend("bottomright",
                 "Inner CV 2",
                 "Inner CV 1"), 
        col=c("black","blue","green","orange","red","purple"), 
-       lty=c(2,1,1,1,1,1), 
+       lty=c(2,1,1,1,1,1),
+       bg = "white",
        cex=0.75)}
 
 # display best "ensemble" model statistics
@@ -625,8 +630,8 @@ for(i in seq(1:length(ids))){
     glm_lst = append(glm_lst, list(glm.fit))
     
     # predict target on validation data  
-    pred = predict(glm.fit , data_df[valid.k,])
-    ROC_df[valid.k,i] = pred
+    pred = predict(glm.fit , data_df[valid.k,], type= "response")
+    ROC_df[valid.k,i] = pred # store predictions in data frame for 4.b
     
     # calculate mis-classification error rate for default 0.5 threshold
     mcr = MCR(target=data_df[valid.k,]$Y, predicted=pred, threshold=0.5)
@@ -667,18 +672,25 @@ text(mean_mcr~ID,
 
 ## 4.b
 ```{R, fig.width=5, fig.height=5}
-# set threshold resolution for ROC curve
-threshold_vec = seq(0, 1, 0.1)
+# select the best model using a 0.5 threshold
 best_model = ord_res_df[1,1]
-k_max = 5
 
-# data of best model
+# predictions data of best model
 Y_pred = ROC_df[,best_model+1]
 Y = ROC_df[,ncol(ROC_df)]
 
-# looping through the folds seem to not be he way they want it.
-# create ROC curve for the best model
+# Get the full ROC curve for entire prediction vs Y
+pred = prediction(Y_pred, Y)
+perf_all = performance(pred,'tpr','fpr')
+
+# get threshold, tpr and fpr values from ROCR
+threshold_df = data.frame(cut=perf_all@alpha.values[[1]], 
+                      fpr=perf_all@x.values[[1]], 
+                      tpr=perf_all@y.values[[1]])
+
+# create ROC curve for each CV in best model
 inds.part = myCVids(n, 5, seed=0)
+perf_lst = list()
 for(k in seq(1:k_max)){
   isk = (inds.part == k)
   valid.k = which(isk)
@@ -686,54 +698,53 @@ for(k in seq(1:k_max)){
   pred <- prediction(Y_pred[valid.k], Y[valid.k])
   perf <- performance(pred,'tpr','fpr')
   
+  perf_df = data.frame(cut=perf@alpha.values[[1]], 
+                      fpr=perf@x.values[[1]], 
+                      tpr=perf@y.values[[1]])
+  perf_lst = append(perf_lst, list(perf_df))
   
-  {plot(perf,
-       lwd=2,
-       main='ROC curve from 5-fold cross-validation')
-  abline(0,1,lty=2,lwd=2,col="red")}
+  # use this code to plot the folds seperately
+  # {plot(perf,
+  #      lwd=2,
+  #      main='ROC curve from 5-fold cross-validation')
+  # abline(0,1,lty=2,lwd=2,col="red")}
   
 }
 
-# this way seems to be the correct one
-pred = prediction(Y_pred, Y)
-perf = performance(pred,'tpr','fpr')
+# Create data frame with all cv performance data data
+cv_threshold_df = data.frame(cut=threshold_df$cut)
+for(i in 1:k_max){
+  cv_threshold_df = merge(cv_threshold_df, perf_lst[[i]], by="cut", all=TRUE)
+  colnames(cv_threshold_df)[i*2] = paste("fpr_",as.character(i), sep="")
+  colnames(cv_threshold_df)[i*2+1] = paste("tpr_",as.character(i), sep="")
+}
+cv_threshold_df = cv_threshold_df[order(cv_threshold_df$cut, decreasing=TRUE),]
+rownames(cv_threshold_df) = NULL
+cv_threshold_df = cv_threshold_df %>% fill(colnames(cv_threshold_df)[-1],
+                                           .direction="down")
 
-# get threshold, tpr and fpr values from ROCR
-threshold_df = data.frame(cut=perf@alpha.values[[1]], 
-                      fpr=perf@x.values[[1]], 
-                      tpr=perf@y.values[[1]])
-
-{plot(perf,
-     lwd=2,
+# calculate the best threshold value
+threshold_df$tpr_fpr_dist = sqrt(
+  ((1-threshold_df$tpr)**2)+(threshold_df$fpr**2)
+  )
+best_threshold_df = threshold_df[which.min(threshold_df$tpr_fpr_dist),]
+# visualize ROC curve
+{plot(perf_all,
+     lwd=3,
      main='ROC curve from 5-fold cross-validation',
      xlim=c(0,1),
      ylim=c(0,1))
-abline(0,1,lty=3,lwd=2,col="red")}
+abline(0,1,lty=3,lwd=3,col="red")
+lines(x=cv_threshold_df$fpr_1, y=cv_threshold_df$tpr_1, lty=2, col="grey")
+lines(x=cv_threshold_df$fpr_2, y=cv_threshold_df$tpr_2, lty=2, col="grey")
+lines(x=cv_threshold_df$fpr_3, y=cv_threshold_df$tpr_3, lty=2, col="grey")
+lines(x=cv_threshold_df$fpr_4, y=cv_threshold_df$tpr_4, lty=2, col="grey")
+lines(x=cv_threshold_df$fpr_5, y=cv_threshold_df$tpr_5, lty=2, col="grey")
+points(x=best_threshold_df$fpr, y=best_threshold_df$tpr, col="green", pch=19)
+}
 
-# figure out how CV should be used
-  # should we loop and CV to get prediction of all?
-  # use ROCR for CV?
-  # already good enough with what was generated?
-
-# print best threshold
-  # get values of tpr and fpr
-  # get best spot by measuring distance to top left corner and select closest point
-  # alternatively use argmax(tpr-fpr) or argmin(tpr-(1-fpr))
-
-# print all plots on single plot. 
-  # add all values to data frame and then plot all in df
-  # make different colors
-  # add legend
-
-"For your best model, use 5-fold CV (same folds as in problem 4a) to construct the ROC curve plot. Your
-vector of predicted values for the ROC curve plot should be produced by training the best model on subset
-Ti and predicting on Vi. To get the entire vector of predicted values, put the 5 vectors of predicted values
-into a single vector; then compare vs truth (the whole vector Y ) proceeding as with the usual ROC curve
-plot construction (reuse the code examples from the ISLR book)."
-
-
-str(perf)
-
+# Print optimal threshold value with (FPR,TPR) closest to ideal as (0,1)
+print(paste("The best threshold value is: ", best_threshold_df$cut))
 ```
 
 
