@@ -150,7 +150,7 @@ my_kmeans <- function(data, k=2, seed=0){
 }
 
 # get probability from multivariate Gaussian
-dmvnorm <- function(X,mu,sigma) {
+my_dmvnorm <- function(X,mu,sigma) {
     k <- ncol(X)
     rooti <- backsolve(chol(sigma),diag(k))
     quads <- colSums((crossprod(rooti,(t(X)-mu)))^2)
@@ -162,7 +162,7 @@ gmm <- function(data, class_vec, mu, k=2, version="v1"){
     sigma = cov(data)
     mvn_vec_lst = list()
     for(k_i in 1:k){
-      mvn_vec = list(dmvnorm(X=data, 
+      mvn_vec = list(my_dmvnorm(X=data, 
             mu=mu[k_i,],
             sigma=sigma))
       
@@ -194,7 +194,7 @@ gmm <- function(data, class_vec, mu, k=2, version="v1"){
     
     mvn_vec_lst = list()
     for(k_i in 1:k){
-      mvn_vec = list(dmvnorm(X=data, 
+      mvn_vec = list(my_dmvnorm(X=data, 
             mu=mu[k_i,],
             sigma=sigma_lst[[k_i]]))
       
@@ -266,7 +266,7 @@ df = data.frame(prob2.list[[5]])
 k=2
 seed=0
 # Multivariate Gaussian
-dmvnorm <- function(X,mu,sigma) {
+my_dmvnorm <- function(X,mu,sigma) {
     k <- ncol(X)
     rooti <- backsolve(chol(sigma),diag(k))
     quads <- colSums((crossprod(rooti,(t(X)-mu)))^2)
@@ -279,7 +279,7 @@ dmvnorm <- function(X,mu,sigma) {
 kmeans_result = my_kmeans(data=df, k=k, seed=seed)
 # get parameters for mixture modelling from k-means clusters
 # get mu from K-means
-mu = matrix(c(-1,2,2,0.5), nrow=2)#kmeans_result[[1]] ###############
+mu = matrix(c(-1,2,2,0.5), nrow=2)#kmeans_result[[1]] ############### CHANING THE INITIALIZATION POINTS MAKE A BIG DIFFERENCE
 # get class vector from K-means
 class_vec = matrix(sample(1:2, size=400, replace=TRUE)) # kmeans_result[[2]] ###############
 # Sigma from data # use sigma list if v2/QDA
@@ -301,7 +301,7 @@ log_likelihood_lst = list()
 #### Estimate class probabilities
 mvn_lst = list()
 for(i_c in 1:k){
-  mvn_ic = list(pi_vec[i_c]*dmvnorm(X=df,mu=mu[i_c,], sigma=sigma_lst[[i_c]])) #* sigma_lst
+  mvn_ic = list(pi_vec[i_c]*my_dmvnorm(X=df,mu=mu[i_c,], sigma=sigma_lst[[i_c]])) #* sigma_lst
   mvn_lst = append(mvn_lst, mvn_ic)
 }
 mvn_df = data.frame(mvn_lst)
@@ -334,7 +334,7 @@ for(i_c in 1:k){
 # calcualte log likelihood
 log_likelihood = 0
 for(i_c in 1:k){
-  log_likelihood = log_likelihood + log(sum(dmvnorm(X=df[class_vec==i_c,],
+  log_likelihood = log_likelihood + log(sum(my_dmvnorm(X=df[class_vec==i_c,],
                                                     mu=mu[i_c,], 
                                                     sigma=sigma_lst[[i_c]]))) #* sigma_lst
 }
@@ -413,6 +413,7 @@ for( i in seq(1:length(prob2.list))){
 # initialize parameters
 k = 5
 d_max = 10
+d_min = 1
 
 # function to calculate RMSE
 rmse_func <- function(test, pred){
@@ -443,7 +444,7 @@ for(k_i in seq(k)){
   
   # loop through parameter sets
   rmse_d_vec = c()
-  for(d in 1:d_max){
+  for(d in d_min:d_max){
     # Inner CV to estimate parameters (seed=1000)
     n_j = nrow(data.train.i)
     rmse_j_d_vec = c()
@@ -481,7 +482,7 @@ for(k_i in seq(k)){
   }
   
   # select parameter set with lowest RMSE
-  best_d = (1:d_max)[which(rmse_d_vec == min(rmse_d_vec))]
+  best_d = (d_min:d_max)[which(rmse_d_vec == min(rmse_d_vec))]
   best_d_vec = c(best_d_vec, best_d)
   
   # train external model with selected d
@@ -501,7 +502,7 @@ results_df$best_rmse = 0
 for(i_k in 1:k){
   results_df$best_d[results_df$ki==i_k] = best_d_vec[i_k]
   results_df$best_rmse[results_df$ki==i_k] = rmse_i_vec[i_k]
-  for(d in 1:d_max){
+  for(d in d_min:d_max){
     results_df$rmse_i[results_df$ki==i_k & results_df$d==d] = rmse_i_mat[d,k_i]
   }
 }
@@ -512,7 +513,7 @@ ki_d_rmse_lst = list()
 for(k_i in 1:k){
   ki_d_rmse_vec = c()
   d_rmse_vec = c()
-  for(d in 1:d_max){
+  for(d in d_min:d_max){
     ki_d_mean_rmse = mean(
                       results_df$rmse_j[results_df$ki==k_i & results_df$d==d]
                       )
@@ -530,7 +531,7 @@ for(k_i in 1:k){
 knitr::kable(head(results_df, 100))
 
 # add data to data frame for visualization
-plot_df = data.frame((1:d_max), ki_d_rmse_lst, d_rmse_vec)
+plot_df = data.frame((d_min:d_max), ki_d_rmse_lst, d_rmse_vec)
 colnames(plot_df) = c("d", as.character(1:k), "outer_cv")
 
 # visualize results as line plots
@@ -571,8 +572,8 @@ rownames(best_model_df) = NULL
 knitr::kable(best_model_df)
 
 print(paste("Mean RMSE: ", mean(best_model_df$best_rmse)))
-
 ```
+Nested k-fold cross-validation can be computationally expensive and time-consuming, especially for complex models and large data sets. Models with a lot of descriptors or large data sets will increase computation time even further making this technique not suited when time or computational constraints are a concern. 
 
 # Problem 4
 ## 4.a
@@ -590,6 +591,7 @@ colnames(ROC_df) = c(ids, "Y")
 feature_names = c("X1","X2","X3","X4")
 features_vec = c()
 mean_mcr_vec = c()
+glm_lst = list()
 for(i in seq(1:length(ids))){
   
   # select subset of data
@@ -620,7 +622,7 @@ for(i in seq(1:length(ids))){
     glm.fit = glm(Y ~ 0 +.,
                  family=binomial,
                  data=as.data.frame(data_df[train.k,]))
-    print(summary(glm.fit))
+    glm_lst = append(glm_lst, list(glm.fit))
     
     # predict target on validation data  
     pred = predict(glm.fit , data_df[valid.k,])
@@ -639,28 +641,42 @@ res_df = data.frame(ids,
 features_vec,
 mean_mcr_vec)
 colnames(res_df) = c("ID", "covariates", "mean_mcr")
-res_df = res_df[order(res_df$mean_mcr),]
-rownames(res_df) = NULL
-knitr::kable(res_df, format = "markdown")
+ord_res_df = res_df[order(res_df$mean_mcr),]
+rownames(ord_res_df) = NULL
+knitr::kable(ord_res_df, format = "markdown")
 
-print(res_df[1,])
+print(paste("The Best model ID is ",ord_res_df[1,1],
+            "with ",ord_res_df[1,2], 
+            "as features and a MCR of ",ord_res_df[1,3]))
 
-"Report: plot of the CV estimates of the test misclassification error rate versus model id, as well as the
-selected covariates in the best model."
+{plot(x=res_df$ID, 
+     y=res_df$mean_mcr,
+     pch=19,
+     type="b",
+     lty=2,
+     xlim=c(min(res_df$ID), max(res_df$ID)+2),
+     xlab="Model ID",
+     ylab="CV Mean misclassification Rate")
+text(mean_mcr~ID, 
+     labels=res_df$covariates,
+     data=res_df, 
+     cex=0.75, 
+     font=3,
+     pos=4)}
 ```
 
 ## 4.b
-```{R}
+```{R, fig.width=5, fig.height=5}
 # set threshold resolution for ROC curve
 threshold_vec = seq(0, 1, 0.1)
-best_model = res_df[1,1]
+best_model = ord_res_df[1,1]
 k_max = 5
 
 # data of best model
 Y_pred = ROC_df[,best_model+1]
 Y = ROC_df[,ncol(ROC_df)]
 
-# looping hrough the folds seem to not be he way they want it.
+# looping through the folds seem to not be he way they want it.
 # create ROC curve for the best model
 inds.part = myCVids(n, 5, seed=0)
 for(k in seq(1:k_max)){
@@ -669,9 +685,13 @@ for(k in seq(1:k_max)){
   
   pred <- prediction(Y_pred[valid.k], Y[valid.k])
   perf <- performance(pred,'tpr','fpr')
-  plot(perf,
-       lwd=2,
-       main='ROC curves from 5-fold cross-validation')
+  
+  
+  # {plot(perf,
+  #      lwd=2,
+  #      main='ROC curve from 5-fold cross-validation')
+  # abline(0,1,lty=2,lwd=2,col="red")}
+  
 }
 
 # this way seems to be the correct one
@@ -679,18 +699,29 @@ pred <- prediction(Y_pred, Y)
 perf <- performance(pred,'tpr','fpr')
 
 
-plot(perf,
+{plot(perf,
      lwd=2,
-     main='ROC curves from 5-fold cross-validation')
+     main='ROC curve from 5-fold cross-validation',
+     xlim=c(0,1),
+     ylim=c(0,1))
+abline(0,1,lty=3,lwd=2,col="red")}
 
 # print best threshold
-# show diagonal
+  # get values of tpr and fpr
+  # get best spot by measuring distance to top left corner and select closest point
+  # alternatively use argmax(tpr-fpr) or argmin(tpr-(1-fpr))
+# print all plots on single plot. 
+  # add all values to data frame and then plot all in df
+  # make different colors
+  # add legend
 
 "For your best model, use 5-fold CV (same folds as in problem 4a) to construct the ROC curve plot. Your
 vector of predicted values for the ROC curve plot should be produced by training the best model on subset
 Ti and predicting on Vi. To get the entire vector of predicted values, put the 5 vectors of predicted values
 into a single vector; then compare vs truth (the whole vector Y ) proceeding as with the usual ROC curve
 plot construction (reuse the code examples from the ISLR book)."
+
+
 
 ```
 
