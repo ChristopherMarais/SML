@@ -764,7 +764,7 @@ k_max = 5
 
 # define parameters to search
 lambda_vec = seq(0,1,0.1)
-mtry_vec = c(1:7,50)
+mtry_vec = c(1:7,p)
 interaction_depth_vec = 1:7
 
 # create lists and data frame for results
@@ -1091,12 +1091,15 @@ knitr::kable(best_gbm_var_importance)
 ```
 
 
-```{R}
+```{R, warning=FALSE, message = FALSE}
 # generate additional 50 features
 data_df = data.frame(prob5.df, matrix( rnorm(n*50,mean=0,sd=1), n, 50))
+# clean_data_df = data_df[,-Y]
+# colnames(clean_data_df) = 1:100
+# clean_data_df$Y = data_df$Y
 
 # define parameters
-p=ncol(data_df)
+p = 100
 n = nrow(data_df)
 test_df = data_df[401:800,]
 x_test_df = model.matrix(Y~., test_df )[,-1]
@@ -1106,7 +1109,7 @@ k_max = 5
 
 # define parameters to search
 lambda_vec = seq(0,1,0.1)
-mtry_vec = c(1:7,50)
+mtry_vec = c(1:7,p)
 interaction_depth_vec = 1:7
 
 # create lists and data frame for results
@@ -1125,7 +1128,7 @@ colnames(RMSE_df) = c("cv_RMSE_n100",
 for(dat in 1:length(data_set_vec)){
   dataset = data_set_vec[dat]
   # specify training data set
-  train_df = prob5.df[1:dataset,]
+  train_df = data_df[1:dataset,]
   x_train_df = model.matrix(Y~., train_df )[,-1]
   y_train_df = train_df$Y
   # perform 5-fold CV
@@ -1415,6 +1418,7 @@ legend("bottomright",
        cex=0.75)}
 
 # display table of RMSE results for different data set sizes
+####################Briefly discuss your findings; particularly, as n increases.
 knitr::kable(RMSE_df)
 
 # variable importance of best models
@@ -1429,9 +1433,9 @@ knitr::kable(best_gbm_var_importance)
 ```
 
 # Problem 6
-```{R, warning=FALSE}
+```{R, warning=FALSE, message = FALSE}
 # define data
-p =20
+p = 20
 n = 200
 train_df = prob6.df[1:200,]
 test_df = prob6.df[201:400,]
