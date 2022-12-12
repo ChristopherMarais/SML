@@ -666,7 +666,7 @@ text(mean_mcr~ID,
 ```
 
 ## 4.b
-```{R, fig.width=5, fig.height=5}
+```{R, fig.width=7, fig.height=7}
 # select the best model using a 0.5 threshold
 best_model = ord_res_df[1,1]
 
@@ -1778,8 +1778,85 @@ MER_df[3,2] = rf_mcr
 # display mean CV MER and test MER
 knitr::kable(MER_df)
 
-# calculate ROC curves for each classifier using the test data
-ROC_models_df = data.frame(Y=y_test_df, svm=svm_pred, rf=rf_pred, gbm=gbm_pred)
-
 ################################################################Briefly discuss.
 ```
+```{R, fig.width=7, fig.height=7}
+
+# calculate ROC curves for each classifier using the test data
+ROC_models_df = data.frame(Y=y_test_df, 
+                           svm=svm_pred, 
+                           rf=rf_pred, 
+                           gbm=gbm_pred)
+
+# SVM
+pred = prediction(svm_pred, y_test_df)
+perf_all = performance(pred,'tpr','fpr')
+svm_threshold_df = data.frame(cut=perf_all@alpha.values[[1]], 
+                      svm_fpr=perf_all@x.values[[1]], 
+                      svm_tpr=perf_all@y.values[[1]])
+
+# RF
+pred = prediction(rf_pred, y_test_df)
+perf_all = performance(pred,'tpr','fpr')
+rf_threshold_df = data.frame(cut=perf_all@alpha.values[[1]], 
+                      rf_fpr=perf_all@x.values[[1]], 
+                      rf_tpr=perf_all@y.values[[1]])
+
+# GBM
+pred = prediction(gbm_pred, y_test_df)
+perf_all = performance(pred,'tpr','fpr')
+gbm_threshold_df = data.frame(cut=perf_all@alpha.values[[1]], 
+                      gbm_fpr=perf_all@x.values[[1]], 
+                      gbm_tpr=perf_all@y.values[[1]])
+
+# merge all ROC curve data
+all_threshold_df = merge(svm_threshold_df, 
+                         rf_threshold_df, 
+                         by="cut", 
+                         all=TRUE)
+all_threshold_df = merge(all_threshold_df, 
+                         gbm_threshold_df, 
+                         by="cut", 
+                         all=TRUE)
+all_threshold_df[1,2:7] = 1
+all_threshold_df = all_threshold_df %>% fill(colnames(all_threshold_df)[-1],
+                                           .direction="down")
+
+# plot ROC curves
+{plot(x=all_threshold_df$svm_fpr,
+      y=all_threshold_df$svm_tpr,
+     lwd=3,
+     type="l",
+     lty=1,
+     col="purple",
+     main='ROC curves',
+     xlab="False Postive Rate (FPR)",
+     ylab="True Postive Rate (TPR)",
+     xlim=c(0,1),
+     ylim=c(0,1))
+abline(0,1,lty=3,lwd=3,col="red")
+lines(x=all_threshold_df$rf_fpr, 
+      y=all_threshold_df$rf_tpr, 
+      lwd=3,
+      lty=1,
+      col="darkgreen")
+lines(x=all_threshold_df$gbm_fpr, 
+      y=all_threshold_df$gbm_tpr, 
+      lwd=3,
+      lty=1,
+      col="orange")
+legend("topleft", 
+       inset=.02,
+       title="Models",
+       legend=c("SVM",
+                "Random Forest",
+                "GBM"),
+       lty=c(1,1,1),
+       lwd=c(3,3,3),
+       col=c("purple","darkgreen","orange"), 
+       bg = "white",
+       cex=0.75)
+}
+```
+
+
