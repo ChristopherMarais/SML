@@ -741,6 +741,10 @@ lines(x=cv_threshold_df$fpr_3, y=cv_threshold_df$tpr_3, lty=2, col="grey")
 lines(x=cv_threshold_df$fpr_4, y=cv_threshold_df$tpr_4, lty=2, col="grey")
 lines(x=cv_threshold_df$fpr_5, y=cv_threshold_df$tpr_5, lty=2, col="grey")
 points(x=best_threshold_df$fpr, y=best_threshold_df$tpr, col="green", pch=19)
+text(x=best_threshold_df$fpr, 
+     y=best_threshold_df$tpr, 
+     pos=1, 
+     paste("(",round(best_threshold_df$fpr,3),",",round(best_threshold_df$tpr,3),")"))
 }
 
 # Print optimal threshold value with (FPR,TPR) closest to ideal as (0,1)
@@ -756,16 +760,35 @@ test_df = prob5.df[401:800,]
 data_set_vec = c(100, 200, 400)
 k_max = 5
 
+# define parameters to search
+lambda_vec = seq(0,1,0.1)
+mtry_vec = c(1:7,50)
+interaction_depth_vec = 1:7
+
+# create lists for results
+lr_dataset_lst = list()
+rf_dataset_lst = list()
+gbm_dataset_lst = list()
+
 # loop through sets of data
-for(set in data_set_vec){
+for(dataset in data_set_vec){
   # specify training data set
-  train_df = prob5.df[1:set,]
+  train_df = prob5.df[1:dataset,]
   # perform 5-fold CV
   set_n = nrow(train_df)
   inds.part = myCVids(set_n, 5, seed=0)
-  lr_rmse_vec = c()
-  rf_rmse_vec = c()
-  gbm_rmse_vec = c()
+  
+  # create data frames to record results in
+  lr_cv_rmse_df = data.frame(matrix(0, 
+                                nrow=length(lambda_vec), 
+                                ncol=k_max))
+  rf_cv_rmse_df = data.frame(matrix(0, 
+                                nrow=length(mtry_vec), 
+                                ncol=k_max))
+  gbm_cv_rmse_df = data.frame(matrix(0, 
+                                 nrow=length(interaction_depth_vec), 
+                                 ncol=k_max))
+  
   for(k in seq(1:k_max)){
     isk = (inds.part == k)
     valid.k = which(isk)
@@ -777,75 +800,229 @@ for(set in data_set_vec){
     x_cv_valid_df = model.matrix(Y~., cv_valid_df )[,-1]
     y_cv_valid_df = cv_valid_df$Y
     
-    # train LR
-    set.seed(0)
-    lasso_reg.fit = glmnet(x_cv_train_df,y_cv_train_df, alpha=1)
+    for(l in 1:length(lambda_vec)){
+      lambda = lambda_vec[l]
+      # train LR
+      set.seed(0)
+      lasso_reg.fit = glmnet(x_cv_train_df,
+                             y_cv_train_df,
+                             alpha=1,
+                             lambda=lambda)
+      # eval LR
+      lr_pred = predict(lasso_reg.fit, x_cv_valid_df)
+      lr_rmse = sqrt(mean((y_cv_valid_df - lr_pred)^2))
+      lr_cv_rmse_df[l,k] = lr_rmse
+    }
+
+    for(m in 1:length(mtry_vec)){
+      mtry = mtry_vec[m]
+      # train RF
+      set.seed(0)
+      rf.fit = randomForest(Y~., 
+                            data=cv_train_df, 
+                            mtry=mtry,
+                            ntree=500,
+                            importance=TRUE)
+      # eval RF
+      rf_pred = predict(rf.fit, cv_valid_df)
+      rf_rmse = sqrt(mean((y_cv_train_df - rf_pred)^2))
+      rf_cv_rmse_df[m,k] = rf_rmse
+    }
     
-    # train RF
-    set.seed(0)
-    rf.fit = randomForest(Y~., 
-                          data=cv_train_df, 
-                          mtry=c(1:7,50),
-                          ntree=500,
-                          importance=TRUE)
-    
-    # train GBM
-    set.seed(0)
-    gbm.fit = gbm(Y~., 
-                  data=cv_train_df,
-                  distribution="gaussian",
-                  n.trees=1000,
-                  shrinkage=0.01, 
-                  interaction.depth=7) # use 1:7 or test all or just one (7)
-    
-    # eval LR
-    lr_pred = predict(lasso_reg.fit, x_cv_valid_df)
-    lr_rmse = sqrt(mean((y_cv_valid_df - lr_pred)^2))
-    lr_rmse_vec = c(lr_rmse_vec, lr_rmse)
-    
-    # eval RF
-    rf_pred = predict(rf.fit, cv_valid_df)
-    rf_rmse = sqrt(mean((y_cv_train_df - rf_pred)^2))
-    rf_rmse_vec = c(rf_rmse_vec, rf_rmse)
-    
-    # eval GBM
-    gbm_pred = predict(gbm.fit, cv_valid_df)
-    gbm_rmse = sqrt(mean((y_cv_train_df - gbm_pred)^2))
-    gbm_rmse_vec = c(gbm_rmse_vec, gbm_rmse)
-    
+    for(d in 1:length(interaction_depth_vec)){
+      interaction_depth = interaction_depth_vec[d]
+      # train GBM
+      set.seed(0)
+      gbm.fit = gbm(Y~., 
+                    data=cv_train_df,
+                    distribution="gaussian",
+                    n.trees=1000,
+                    shrinkage=0.01, 
+                    interaction.depth=interaction_depth)
+      # eval GBM
+      gbm_pred = predict(gbm.fit, cv_valid_df)
+      gbm_rmse = sqrt(mean((y_cv_train_df - gbm_pred)^2))
+      gbm_cv_rmse_df[d,k] = gbm_rmse
+    }
+
   }
-  print(set)
-  print(mean(lr_rmse_vec))
-  print(mean(rf_rmse_vec))
-  print(mean(gbm_rmse_vec))
-  print("____________")
   
-  
+  # add data frames to list
+  lr_cv_rmse_df$mean = rowMeans(lr_cv_rmse_df)
+  lr_dataset_lst = append(lr_dataset_lst,list(lr_cv_rmse_df))
+  rf_cv_rmse_df$mean = rowMeans(rf_cv_rmse_df)
+  rf_dataset_lst = append(rf_dataset_lst, list(rf_cv_rmse_df))
+  gbm_cv_rmse_df$mean = rowMeans(gbm_cv_rmse_df)
+  gbm_dataset_lst = append(gbm_dataset_lst, list(gbm_cv_rmse_df))
   
 }
 
-# find parameters that have to get tuned and tune for them. 
+
+
+# visualize cross-validation RMSE
+# plot Lasso regression model CV results
+# find optimal values
+lr_min_lst = which.min(c(min(lr_dataset_lst[[1]]$mean), 
+                          min(lr_dataset_lst[[2]]$mean), 
+                          min(lr_dataset_lst[[3]]$mean)))
+lr_idx_min = which.min(lr_dataset_lst[[lr_min_lst]]$mean)
+lr_y_min = round(lr_dataset_lst[[lr_min_lst]]$mean[lr_idx_min],3)
+lr_x_min = lambda_vec[lr_idx_min]
+
+{plot(x=lambda_vec, 
+     y=lr_dataset_lst[[1]]$mean,
+     type="b",
+     main="Lasso Regression CV for different datasets",
+     xlab="Lambda",
+     ylab="CV Mean validation RMSE",
+     pch=19,
+     lwd=2,
+     ylim=c(min(min(lr_dataset_lst[[1]]$mean), 
+                min(lr_dataset_lst[[2]]$mean), 
+                min(lr_dataset_lst[[3]]$mean))-0.1,
+              max(max(lr_dataset_lst[[1]]$mean), 
+                max(lr_dataset_lst[[2]]$mean), 
+                max(lr_dataset_lst[[3]]$mean))),
+      xlim=c(0,max(lambda_vec)+(max(lambda_vec)/10)))
+lines(x=lambda_vec, 
+      lr_dataset_lst[[2]]$mean, 
+      type="b", 
+      pch=19, 
+      col="red", 
+      lwd=2)
+lines(x=lambda_vec, 
+      lr_dataset_lst[[3]]$mean, 
+      type="b", 
+      pch=19, 
+      col="blue", 
+      lwd=2,
+      )
+points(x=lr_x_min, y=lr_y_min, cex=2, lwd=3, col="green")
+text(x=lr_x_min, y=lr_y_min, pos=1, paste("(",lr_x_min,",",lr_y_min,")"))
+legend("topright", 
+       inset=.02,
+       title="Sample size",
+       legend=c("n=100",
+                "n=200",
+                "n=400"),
+       lty=c(1,1,1),
+       col=c("black","red","blue"), 
+       bg = "white",
+       cex=0.75)}
+
+# plot Random Forest model CV results
+# find optimal values
+rf_min_lst = which.min(c(min(rf_dataset_lst[[1]]$mean), 
+                          min(rf_dataset_lst[[2]]$mean), 
+                          min(rf_dataset_lst[[3]]$mean)))
+rf_idx_min = which.min(rf_dataset_lst[[rf_min_lst]]$mean)
+rf_y_min = round(rf_dataset_lst[[rf_min_lst]]$mean[rf_idx_min],3)
+rf_x_min = mtry_vec[rf_idx_min]
+
+{plot(x=mtry_vec, 
+     y=rf_dataset_lst[[1]]$mean,
+     type="b",
+     main="Random Forest CV for different datasets",
+     xlab="Number of sampled candidates at split",
+     ylab="CV Mean validation RMSE",
+     pch=19,
+     lwd=2,
+     ylim=c(min(min(rf_dataset_lst[[1]]$mean), 
+                min(rf_dataset_lst[[2]]$mean), 
+                min(rf_dataset_lst[[3]]$mean)),
+              max(max(rf_dataset_lst[[1]]$mean), 
+                max(rf_dataset_lst[[2]]$mean), 
+                max(rf_dataset_lst[[3]]$mean)))
+     )
+lines(x=mtry_vec, 
+      rf_dataset_lst[[2]]$mean, 
+      type="b", 
+      pch=19, 
+      col="red", 
+      lwd=2)
+lines(x=mtry_vec, 
+      rf_dataset_lst[[3]]$mean, 
+      type="b", 
+      pch=19, 
+      col="blue", 
+      lwd=2)
+points(x=rf_x_min, y=rf_y_min, cex=2, lwd=3, col="green")
+text(x=rf_x_min, y=rf_y_min, pos=4, paste("(",rf_x_min,",",rf_y_min,")"))
+legend("bottomright", 
+       inset=.02,
+       title="Sample size",
+       legend=c("n=100",
+                "n=200",
+                "n=400"), 
+       lty=c(1,1,1),
+       col=c("black","red","blue"), 
+       bg = "white",
+       cex=0.75)}
+
+# plot gbm model CV results
+# find optimal values
+gbm_min_lst = which.min(c(min(gbm_dataset_lst[[1]]$mean), 
+                          min(gbm_dataset_lst[[2]]$mean), 
+                          min(gbm_dataset_lst[[3]]$mean)))
+gbm_idx_min = which.min(gbm_dataset_lst[[gbm_min_lst]]$mean)
+gbm_y_min = round(gbm_dataset_lst[[gbm_min_lst]]$mean[gbm_idx_min],3)
+gbm_x_min = interaction_depth_vec[gbm_idx_min]
+
+{plot(x=interaction_depth_vec, 
+     y=gbm_dataset_lst[[1]]$mean,
+     type="b",
+     main="Generalized Boosted Regression CV for different datasets",
+     xlab="Interaction Depth",
+     ylab="CV Mean validation RMSE",
+     pch=19,
+     lwd=2,
+     ylim=c(min(min(gbm_dataset_lst[[1]]$mean), 
+                min(gbm_dataset_lst[[2]]$mean), 
+                min(gbm_dataset_lst[[3]]$mean)),
+              max(max(gbm_dataset_lst[[1]]$mean), 
+                max(gbm_dataset_lst[[2]]$mean), 
+                max(gbm_dataset_lst[[3]]$mean)))
+     )
+lines(x=interaction_depth_vec, 
+      gbm_dataset_lst[[2]]$mean, 
+      type="b", 
+      pch=19, 
+      col="red", 
+      lwd=2)
+lines(x=interaction_depth_vec, 
+      gbm_dataset_lst[[3]]$mean, 
+      type="b", 
+      pch=19, 
+      col="blue", 
+      lwd=2)
+points(x=gbm_x_min, y=gbm_y_min, cex=2, lwd=3, col="green")
+text(x=gbm_x_min, y=gbm_y_min, pos=4, paste("(",gbm_x_min,",",gbm_y_min,")"))
+legend("bottomright", 
+       inset=.02,
+       title="Sample size",
+       legend=c("n=100",
+                "n=200",
+                "n=400"),
+       lty=c(1,1,1),
+       col=c("black","red","blue"), 
+       bg = "white",
+       cex=0.75)}
+
+
+
+
+
+# make dfs for test rmse
+# apply test rmse only to top selected model parameters
+# add test rmse to list for each dataset
+
 # plots should be tuning parameter and cv rmse
-# use cv as used to tune parameters in Q3
-# calcualte test and cv RMSE and print in table 
+# calculate test and cv RMSE and print in table 
 
 # Discuss what you expect: (i) as training sample size increases but the test  
 # sample is held fixed; (ii) training
 # set is held fixed but the test sample size increases.
 
-
-"For each method, report 3 CV RMSE curves (one curve for each n=100,200 and 400), overlaid on the
-same plot. Mark the optimal value of the CV RMSE and the corresponding value of the tuning parameter.
-Additionally, report the 3-by-6 matrix with rows corresponding to the three ML methods and columns
-corresponding to the CV RMSE and test RMSE for each value of n for model with parameters chosen by
-CV. (I.e., two RMSE values for n = 100, then the two RMSE values for n = 200, etc.) The CV RMSE
-will be computed from the training data only. The test RMSE should be computed by fitting the model
-on the entire training dataset with parameters determined by the CV; then this model is used to predict
-on the test set.
-Briefly discuss your findings; particularly, as n increases.
-For RF and GBM, report and discuss variable importance (for the best models).
-Discuss what you expect: (i) as training sample size increases but the test sample is held fixed; (ii) training
-set is held fixed but the test sample size increases."
 ```
 
 ```{R}
