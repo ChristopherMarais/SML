@@ -723,6 +723,7 @@ threshold_df$tpr_fpr_dist = sqrt(
   ((1-threshold_df$tpr)**2)+(threshold_df$fpr**2)
   )
 best_threshold_df = threshold_df[which.min(threshold_df$tpr_fpr_dist),]
+
 # visualize ROC curve
 {plot(perf_all,
      lwd=3,
@@ -916,7 +917,7 @@ for(dat in 1:length(data_set_vec)){
   
 }
 # name rows in results data frame
-rownames(RMSE_df) = c("Lasso_Regression", "Random_Forest", "Generalized_Boosted_Regression")
+rownames(RMSE_df) = c("LR", "RF", "GBM")
 
 # visualize cross-validation RMSE
 # plot Lasso regression model CV results
@@ -1490,12 +1491,16 @@ for(k in seq(1:k_max)){
     set.seed(0)
     svm.fit = svm(Y~., 
                   data=cv_train_df, 
-                  kernel="radial", 
+                  kernel="radial",
+                  probability=TRUE,
                   gamma=gamma,
                   type="C")
-    svm_pred = predict(svm.fit, cv_valid_df)
+    svm_pred = attr(
+      predict(svm.fit, cv_valid_df, probability=TRUE),
+                    "probabilities")[,2]
+    
     svm_mcr = MCR(target=as.logical(y_cv_valid_df), 
-                  predicted=as.logical(svm_pred))
+                  predicted=svm_pred)
     svm_cv_mer_df[l,k] = svm_mcr
   }
   
@@ -1508,9 +1513,9 @@ for(k in seq(1:k_max)){
                           mtry=mtry,
                           ntree=500,
                           importance=TRUE)
-    rf_pred = predict(rf.fit, cv_valid_df)
+    rf_pred = predict(rf.fit, cv_valid_df, type="prob")[,2]
     rf_mcr = MCR(target=as.logical(y_cv_valid_df), 
-                 predicted=as.logical(rf_pred))
+                 predicted=rf_pred)
     rf_cv_mer_df[m,k] = rf_mcr
   }
   
@@ -1518,15 +1523,15 @@ for(k in seq(1:k_max)){
   for(d in 1:length(gbm_par_vec)){
     interaction_depth = gbm_par_vec[d]
     set.seed(0)
-    gbm.fit = gbm(Y~., 
+    gbm.fit = gbm(as.integer(cv_train_df$Y)-1~., 
                   data=cv_train_df,
-                  distribution="gaussian",
+                  distribution="bernoulli",
                   n.trees=1000,
                   shrinkage=0.01, 
                   interaction.depth=interaction_depth)
-    gbm_pred = predict(gbm.fit, cv_valid_df)
+    gbm_pred = predict(gbm.fit, cv_valid_df, type="response")
     gbm_mcr = MCR(target=as.logical(y_cv_valid_df), 
-                  predicted=as.logical(gbm_pred))
+                  predicted=gbm_pred)
     gbm_cv_mer_df[d,k] = gbm_mcr
   }
 
@@ -1600,7 +1605,7 @@ text(x=svm_best_par,
      y=svm_cv_mcr,
      pos=4,
      labels=paste("(",svm_best_par,",",svm_cv_mcr,")"))
-legend("bottomright", 
+legend("topright", 
        inset=.02,
        legend=c("Mean MER",
                 "fold 1",
@@ -1660,7 +1665,7 @@ text(x=rf_best_par,
      y=rf_cv_mcr,
      pos=1,
      labels=paste("(",rf_best_par,",",rf_cv_mcr,")"))
-legend("bottomright", 
+legend("topright", 
        inset=.02,
        legend=c("Mean MER",
                 "fold 1",
@@ -1720,7 +1725,7 @@ text(x=gbm_best_par,
      y=gbm_cv_mcr,
      pos=1,
      labels=paste("(",gbm_best_par,",",gbm_cv_mcr,")"))
-legend("bottomleft", 
+legend("topright", 
        inset=.02,
        legend=c("Mean MER",
                 "fold 1",
@@ -1737,11 +1742,14 @@ legend("bottomleft",
 set.seed(0)
 best_svm.fit = svm(Y~., 
               data=train_df, 
-              kernel="radial", 
+              kernel="radial",
+              probability=TRUE,
               gamma=svm_best_par,
               type="C")
-svm_pred = predict(best_svm.fit, test_df)
-svm_mcr = MCR(target=as.logical(y_test_df), predicted=as.logical(svm_pred))
+svm_pred = attr(
+  predict(best_svm.fit, test_df, probability=TRUE),
+                "probabilities")[,2]
+svm_mcr = MCR(target=as.logical(y_test_df), predicted=svm_pred)
 MER_df[1,2] = svm_mcr
 
 # train and test best RF
@@ -1751,32 +1759,27 @@ best_rf.fit = randomForest(Y~.,
                       mtry=rf_best_par,
                       ntree=500,
                       importance=TRUE)
-rf_pred = predict(best_rf.fit, test_df)
-rf_mcr = MCR(target=as.logical(y_test_df), predicted=as.logical(rf_pred))
+rf_pred = predict(best_rf.fit, test_df, type="prob")[,2]
+rf_mcr = MCR(target=as.logical(y_test_df), predicted=rf_pred)
 MER_df[2,2] = rf_mcr
 
 # train and test best GBM
 set.seed(0)
-best_gbm.fit = gbm(Y~., 
+best_gbm.fit = gbm(as.integer(train_df$Y)-1~., 
               data=train_df,
-              distribution="gaussian",
+              distribution="bernoulli",
               n.trees=1000,
               shrinkage=0.01, 
               interaction.depth=gbm_best_par)
-gbm_pred = predict(best_gbm.fit, test_df)
-rf_mcr = MCR(target=as.logical(y_test_df), predicted=as.logical(gbm_pred))
+gbm_pred = predict(best_gbm.fit, test_df, type="response")
+rf_mcr = MCR(target=as.logical(y_test_df), predicted=gbm_pred)
 MER_df[3,2] = rf_mcr
 
 # display mean CV MER and test MER
 knitr::kable(MER_df)
 
 # calculate ROC curves for each classifier using the test data
-
+ROC_models_df = data.frame(Y=y_test_df, svm=svm_pred, rf=rf_pred, gbm=gbm_pred)
 
 ################################################################Briefly discuss.
 ```
-
-```{R}
-
-```
-
