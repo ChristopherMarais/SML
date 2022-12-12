@@ -6,7 +6,7 @@ fontsize: 11pt
 geometry: margin=2cm
 ---
 
-# Exam code, data, and libraries
+# General functions, data, and libraries
 ```{R}
 # functions
 myCVids <- function(n, K, seed=0) {
@@ -55,6 +55,17 @@ bin2dec <- function(binM) {
   d
 }
 
+# Mis-classification error rate calculation
+MCR <- function(target, predicted, threshold=0.5){
+  if(length(target)!=length(predicted)){
+    print("ERROR: predictions and true values not of same shape")
+  }else{
+    pred_vals = as.integer((predicted > threshold))
+    mcr = sum(pred_vals != target)/length(target)
+    return(mcr)
+  }
+}
+
 # data
 load('SML.2022.final.Rdata')
 
@@ -69,22 +80,6 @@ library(MASS)
 # libraries for ease of use
 library(pdist) # pdist() can be replaced by dist() but dist() is slower
 library(tidyr) # just saved some time on filling NA values in a dataframe
-```
-
-
-## My functions
-```{R}
-# functions
-# Mis-classification ratio calculation
-MCR <- function(target, predicted, threshold=0.5){
-  if(length(target)!=length(predicted)){
-    print("ERROR: predictions and true values not of same shape")
-  }else{
-    pred_vals = as.integer((predicted > threshold))
-    mcr = sum(pred_vals != target)/length(target)
-    return(mcr)
-  }
-}
 ```
 
 # Problem 1
@@ -788,7 +783,7 @@ for(dat in 1:length(data_set_vec)){
   y_train_df = train_df$Y
   # perform 5-fold CV
   set_n = nrow(train_df)
-  inds.part = myCVids(set_n, 5, seed=0)
+  inds.part = myCVids(set_n, k_max, seed=0)
   
   # create data frames to record results in
   lr_cv_rmse_df = data.frame(matrix(0, 
@@ -1133,7 +1128,7 @@ for(dat in 1:length(data_set_vec)){
   y_train_df = train_df$Y
   # perform 5-fold CV
   set_n = nrow(train_df)
-  inds.part = myCVids(set_n, 5, seed=0)
+  inds.part = myCVids(set_n, k_max, seed=0)
   
   # create data frames to record results in
   lr_cv_rmse_df = data.frame(matrix(0, 
@@ -1432,71 +1427,356 @@ knitr::kable(best_gbm_var_importance)
 
 ```
 
+
+
+
+
 # Problem 6
 ```{R, warning=FALSE, message = FALSE}
 # define data
 p = 20
 n = 200
+k_max = 5
 train_df = prob6.df[1:200,]
+train_df$Y = as.factor(train_df$Y)
 test_df = prob6.df[201:400,]
+test_df$Y = as.factor(test_df$Y)
 
-# 5-fold validation
-inds.part = myCVids(n, 5, seed=0)
-svm_rmse_vec = c()
-rf_rmse_vec = c()
-gbm_rmse_vec = c()
+# define parameters to search
+svm_par_vec = seq(0,0.4,0.01)
+rf_par_vec = c(1:7,p)
+gbm_par_vec = 1:7
+
+# create lists and data frame for results
+MER_df = data.frame(matrix(0, nrow=3, ncol=2))
+colnames(MER_df) = c("cv_MER", "test_MER")
+rownames(MER_df) = c("SVM","RF","GBM")
+svm_cv_mer_df = data.frame(matrix(0, 
+                              nrow=length(svm_par_vec), 
+                              ncol=k_max))
+rf_cv_mer_df = data.frame(matrix(0, 
+                              nrow=length(rf_par_vec), 
+                              ncol=k_max))
+gbm_cv_mer_df = data.frame(matrix(0, 
+                               nrow=length(gbm_par_vec), 
+                               ncol=k_max))
+                      
+# specify training and testing data set
+x_train_df = model.matrix(Y~., train_df )[,-1]
+y_train_df = train_df$Y
+x_test_df = model.matrix(Y~., test_df )[,-1]
+y_test_df = test_df$Y
+
+
+# perform 5-fold CV
+set_n = nrow(train_df)
+inds.part = myCVids(set_n, k_max, seed=0)
 for(k in seq(1:k_max)){
   isk = (inds.part == k)
   valid.k = which(isk)
   train.k = which(!isk)
+  
+  # create training and validation sets
   cv_train_df = train_df[train.k,]
   cv_valid_df = train_df[valid.k,]
+  x_cv_train_df = model.matrix(Y~., cv_train_df )[,-1]
+  y_cv_train_df = cv_train_df$Y
+  x_cv_valid_df = model.matrix(Y~., cv_valid_df )[,-1]
   y_cv_valid_df = cv_valid_df$Y
   
-  # train SVM
-  set.seed(0)
-  svm.fit = svm(Y~., 
-                data=cv_train_df, 
-                kernel="radial", 
-                gamma=1,
-                cost=1,
-                type="C")
+  # SVM
+  for(l in 1:length(svm_par_vec)){
+    gamma = svm_par_vec[l]
+    set.seed(0)
+    svm.fit = svm(Y~., 
+                  data=cv_train_df, 
+                  kernel="radial", 
+                  gamma=gamma,
+                  type="C")
+    svm_pred = predict(svm.fit, cv_valid_df)
+    svm_mcr = MCR(target=as.logical(y_cv_valid_df), 
+                  predicted=as.logical(svm_pred))
+    svm_cv_mer_df[l,k] = svm_mcr
+  }
   
-  # train RF
-  set.seed(0)
-  rf.fit = randomForest(as.factor(Y)~., 
-                        data=cv_train_df, 
-                        mtry=c(1:7,50),
-                        ntree=500,
-                        importance=TRUE)
+  # RF
+  for(m in 1:length(rf_par_vec)){
+    mtry = rf_par_vec[m]
+    set.seed(0)
+    rf.fit = randomForest(Y~., 
+                          data=cv_train_df, 
+                          mtry=mtry,
+                          ntree=500,
+                          importance=TRUE)
+    rf_pred = predict(rf.fit, cv_valid_df)
+    rf_mcr = MCR(target=as.logical(y_cv_valid_df), 
+                 predicted=as.logical(rf_pred))
+    rf_cv_mer_df[m,k] = rf_mcr
+  }
   
-  # train GBM
-  set.seed(0)
-  gbm.fit = gbm(Y~., 
-                data=cv_train_df,
-                distribution="bernoulli",
-                n.trees=1000,
-                shrinkage=0.01, 
-                interaction.depth=7) # use 1:7 or test all or just one (7)
-  
-  # eval SVM
-  svm_pred = predict(svm.fit, cv_valid_df)
-  # svm_rmse_vec = c(svm_rmse_vec, svm_rmse)
-  
-  # eval RF
-  rf_pred = predict(rf.fit, cv_valid_df)
-  # rf_rmse_vec = c(rf_rmse_vec, rf_rmse)
-  
-  # eval GBM
-  gbm_pred = predict(gbm.fit, cv_valid_df)
-  # needs a threshold
-  # gbm_rmse_vec = c(gbm_rmse_vec, gbm_rmse)
-  
+  # GBM
+  for(d in 1:length(gbm_par_vec)){
+    interaction_depth = gbm_par_vec[d]
+    set.seed(0)
+    gbm.fit = gbm(Y~., 
+                  data=cv_train_df,
+                  distribution="gaussian",
+                  n.trees=1000,
+                  shrinkage=0.01, 
+                  interaction.depth=interaction_depth)
+    gbm_pred = predict(gbm.fit, cv_valid_df)
+    gbm_mcr = MCR(target=as.logical(y_cv_valid_df), 
+                  predicted=as.logical(gbm_pred))
+    gbm_cv_mer_df[d,k] = gbm_mcr
+  }
+
 }
 
-# print(mean(svm_rmse_vec))
-# print(mean(rf_rmse_vec))
-# print(mean(gbm_rmse_vec))
-print("____________")
+# calculate means of cv MER
+svm_cv_mer_df$mean = rowMeans(svm_cv_mer_df)
+rf_cv_mer_df$mean = rowMeans(rf_cv_mer_df)
+gbm_cv_mer_df$mean = rowMeans(gbm_cv_mer_df)
+
+# select best parameter and get best mean cv RMSE
+svm_min_idx = which.min(svm_cv_mer_df$mean)
+svm_best_par = svm_par_vec[svm_min_idx]
+svm_cv_mcr = min(svm_cv_mer_df$mean)
+MER_df[1,1] = svm_cv_mcr
+
+rf_min_idx = which.min(rf_cv_mer_df$mean)
+rf_best_par = rf_par_vec[rf_min_idx]
+rf_cv_mcr = min(rf_cv_mer_df$mean)
+MER_df[2,1] = rf_cv_mcr
+
+gbm_min_idx = which.min(gbm_cv_mer_df$mean)
+gbm_best_par = gbm_par_vec[gbm_min_idx]
+gbm_cv_mcr = min(gbm_cv_mer_df$mean)
+MER_df[3,1] = gbm_cv_mcr
+
+# display CV MER curves
+# SVM CV MER plot
+{plot(y = svm_cv_mer_df$mean, 
+     x=svm_par_vec, 
+     type="b", 
+     pch=19, 
+     lty=2, 
+     lwd=2,
+     ylim=c(0,1),
+     main="SVM",
+     xlab="Gamma",
+     ylab="MER")
+lines(y = svm_cv_mer_df$X1, 
+     x=svm_par_vec, 
+     type="l", 
+     pch=19,
+     col="orange")
+lines(y = svm_cv_mer_df$X2, 
+     x=svm_par_vec, 
+     type="l", 
+     pch=19,
+     col="red")
+lines(y = svm_cv_mer_df$X3, 
+     x=svm_par_vec, 
+     type="l", 
+     pch=19,
+     col="purple")
+lines(y = svm_cv_mer_df$X4, 
+     x=svm_par_vec, 
+     type="l", 
+     pch=19,
+     col="blue")
+lines(y = svm_cv_mer_df$X5, 
+     x=svm_par_vec, 
+     type="l", 
+     pch=19,
+     col="darkgreen")
+points(x=svm_best_par,
+       y=svm_cv_mcr,
+       cex=3,
+       lwd=3,
+       col="green"
+       )
+text(x=svm_best_par,
+     y=svm_cv_mcr,
+     pos=4,
+     labels=paste("(",svm_best_par,",",svm_cv_mcr,")"))
+legend("bottomright", 
+       inset=.02,
+       legend=c("Mean MER",
+                "fold 1",
+                "fold 2",
+                "fold 3",
+                "fold 4",
+                "fold 5"),
+       lty=c(2,1,1,1,1,1),
+       col=c("black","orange","red","purple","blue","darkgreen"), 
+       bg = "white",
+       cex=0.75)}
+
+# RF CV MER plot
+{plot(y = rf_cv_mer_df$mean, 
+     x=rf_par_vec, 
+     type="b", 
+     pch=19, 
+     lty=2, 
+     lwd=2,
+     ylim=c(0,1),
+     xlim=c(0,20),
+     main="RF",
+     xlab="Mtry",
+     ylab="MER")
+lines(y = rf_cv_mer_df$X1, 
+     x=rf_par_vec, 
+     type="l", 
+     pch=19,
+     col="orange")
+lines(y = rf_cv_mer_df$X2, 
+     x=rf_par_vec, 
+     type="l", 
+     pch=19,
+     col="red")
+lines(y = rf_cv_mer_df$X3, 
+     x=rf_par_vec, 
+     type="l", 
+     pch=19,
+     col="purple")
+lines(y = rf_cv_mer_df$X4, 
+     x=rf_par_vec, 
+     type="l", 
+     pch=19,
+     col="blue")
+lines(y = rf_cv_mer_df$X5, 
+     x=rf_par_vec, 
+     type="l", 
+     pch=19,
+     col="darkgreen")
+points(x=rf_best_par,
+       y=rf_cv_mcr,
+       cex=3,
+       lwd=3,
+       col="green"
+       )
+text(x=rf_best_par,
+     y=rf_cv_mcr,
+     pos=1,
+     labels=paste("(",rf_best_par,",",rf_cv_mcr,")"))
+legend("bottomright", 
+       inset=.02,
+       legend=c("Mean MER",
+                "fold 1",
+                "fold 2",
+                "fold 3",
+                "fold 4",
+                "fold 5"),
+       lty=c(2,1,1,1,1,1),
+       col=c("black","orange","red","purple","blue","darkgreen"), 
+       bg = "white",
+       cex=0.75)}
+
+#GBM CV MER plot
+{plot(y = gbm_cv_mer_df$mean, 
+     x=gbm_par_vec, 
+     type="b", 
+     pch=19, 
+     lty=2, 
+     lwd=2,
+     ylim=c(0,1),
+     xlim=c(0.5,7),
+     main="GBM",
+     xlab="Interaction depth",
+     ylab="MER")
+lines(y = gbm_cv_mer_df$X1, 
+     x=gbm_par_vec, 
+     type="l", 
+     pch=19,
+     col="orange")
+lines(y = gbm_cv_mer_df$X2, 
+     x=gbm_par_vec, 
+     type="l", 
+     pch=19,
+     col="red")
+lines(y = gbm_cv_mer_df$X3, 
+     x=gbm_par_vec, 
+     type="l", 
+     pch=19,
+     col="purple")
+lines(y = gbm_cv_mer_df$X4, 
+     x=gbm_par_vec, 
+     type="l", 
+     pch=19,
+     col="blue")
+lines(y = gbm_cv_mer_df$X5, 
+     x=gbm_par_vec, 
+     type="l", 
+     pch=19,
+     col="darkgreen")
+points(x=gbm_best_par,
+       y=gbm_cv_mcr,
+       cex=3,
+       lwd=3,
+       col="green"
+       )
+text(x=gbm_best_par,
+     y=gbm_cv_mcr,
+     pos=1,
+     labels=paste("(",gbm_best_par,",",gbm_cv_mcr,")"))
+legend("bottomleft", 
+       inset=.02,
+       legend=c("Mean MER",
+                "fold 1",
+                "fold 2",
+                "fold 3",
+                "fold 4",
+                "fold 5"),
+       lty=c(2,1,1,1,1,1),
+       col=c("black","orange","red","purple","blue","darkgreen"), 
+       bg = "white",
+       cex=0.75)}
+
+# train and test best SVM
+set.seed(0)
+best_svm.fit = svm(Y~., 
+              data=train_df, 
+              kernel="radial", 
+              gamma=svm_best_par,
+              type="C")
+svm_pred = predict(best_svm.fit, test_df)
+svm_mcr = MCR(target=as.logical(y_test_df), predicted=as.logical(svm_pred))
+MER_df[1,2] = svm_mcr
+
+# train and test best RF
+set.seed(0)
+best_rf.fit = randomForest(Y~., 
+                      data=train_df, 
+                      mtry=rf_best_par,
+                      ntree=500,
+                      importance=TRUE)
+rf_pred = predict(best_rf.fit, test_df)
+rf_mcr = MCR(target=as.logical(y_test_df), predicted=as.logical(rf_pred))
+MER_df[2,2] = rf_mcr
+
+# train and test best GBM
+set.seed(0)
+best_gbm.fit = gbm(Y~., 
+              data=train_df,
+              distribution="gaussian",
+              n.trees=1000,
+              shrinkage=0.01, 
+              interaction.depth=gbm_best_par)
+gbm_pred = predict(best_gbm.fit, test_df)
+rf_mcr = MCR(target=as.logical(y_test_df), predicted=as.logical(gbm_pred))
+MER_df[3,2] = rf_mcr
+
+# display mean CV MER and test MER
+knitr::kable(MER_df)
+
+# calculate ROC curves for each classifier using the test data
+
+
+################################################################Briefly discuss.
+```
+
+```{R}
 
 ```
+
