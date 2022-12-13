@@ -93,36 +93,36 @@ library(mvtnorm) # to estimate multivariate Normal Density else use my_dmvnorm
 
 # Problem 1
 ## 1.1
-The receiver operating characteristic (ROC) curve is a graphical representation of the performance of a binary classification model. It plots the true positive rate (TPR) against the false positive rate (FPR) at different classification thresholds. The ROC curve is useful for evaluating the trade-off between the sensitivity (the ability of the model to correctly identify positive examples) and the specificity (the ability of the model to correctly identify negative examples) of a classification model.
-One advantage of using the ROC curve to evaluate a classification model is that it is not sensitive to class imbalances in the data. This means that the ROC curve can be used to compare the performance of models on datasets with different distributions of positive and negative examples.
-However, the ROC curve has some limitations. One limitation is that it does not provide information about the absolute performance of a classification model. For example, a model with an ROC curve that lies along the diagonal line (i.e. a model with no true positive or true negative examples) will have the same ROC curve as a model with a high TPR and low FPR.
-In contrast, the confusion matrix is a table that displays the number of true positive, true negative, false positive, and false negative examples produced by a classification model. The confusion matrix provides a more detailed view of the performance of a classification model, but it is sensitive to class imbalances in the data. This means that the confusion matrix can be misleading when comparing the performance of models on datasets with different distributions of positive and negative examples.
+The receiver operating characteristic (ROC) curve is a graphical representation of the performance of a binary classification model. It plots the true positive rate (TPR) against the false positive rate (FPR) at different classification thresholds. The ROC curve is useful for evaluating the trade-off between the sensitivity and the specificity of a classification model. The confusion matrix (CM) is a table that displays the number of true positive, true negative, false positive, and false negative examples produced by a classification model. Another major difference between ROC curves and CMs is that ROC curves are calcualted for multiple classification thresholds and a CM is claclualted for a single threshold. One benefit that ROC curves have over CMs is that they can be used to calibrate the threshold value of a classifier ot further tune it. CMs may not be able to be used for multiple thresholds at once but have one advantage over the ROC curve as it gives a more detailed view of the classifier's performance. It is capable of providing information not only about the TPR and FPR but can be used ot calcualte TNR, FNR, accuracy or the F-1 score of a classifier. 
 
 ## 1.2
-The 45-degree line on a receiver operating characteristic (ROC) plot represents the performance of a classifier that is making random predictions. This line is defined by the equation TPR = FPR, where TPR is the true positive rate (the proportion of positive examples that are correctly classified) and FPR is the false positive rate (the proportion of negative examples that are incorrectly classified as positive).
-For a classifier with TPR = FPR = x, where x is a value in the range [0, 1], the classifier will have an ROC curve that lies along the 45-degree line. This indicates that the classifier is making random predictions and has no ability to differentiate between positive and negative examples. Such a classifier would have a very low overall accuracy and would not be useful for most applications.
+The 45-degree line on a ROC curve plot is equal to the performance of a classifier that is making random predictions or a classifier that has no skill. This 45-degree line is defined as TPR = FPR. The classifier described in the question will have an ROC curve that lies along the 45-degree line. This indicates that the classifier is making random predictions and has no ability to differentiate between positive and negative examples. Such a classifier would have a very low overall accuracy and would not be useful for most applications.
 
 ## 1.3
-A classifier with TPR(x) = x^2, where x is the false positive rate (FPR), cannot be improved upon without acquiring more data. This is because the TPR and FPR are constrained by the equation TPR = FPR^2, which defines a curve that is always non-decreasing and concave up. This means that the classifier will always have a TPR that is at least as high as the TPR of any other classifier with the same FPR, and it will not be possible to improve the classifier's performance by changing its parameters or applying other techniques without additional data.
-One way to improve the performance of this classifier would be to acquire more data and retrain the model using the new data. This could potentially allow the model to learn more complex patterns and improve its ability to differentiate between positive and negative examples. However, without knowing more about the specific dataset and the classifier being used, it is difficult to say for certain whether this approach would be effective.
+This classifier is one that is better than random, but not yet ideal. This means That technically there is room to improve the model's performance either through changing some of it's hyperparameters or by acquiring more data and retrain the model. This could potentially allow the model to learn more complex patterns and improve its ability to differentiate between positive and negative examples.
 
 ## 1.4
-For a population with 80% controls (0) and 20% cases (1), the true positive rate (TPR) and false positive rate (FPR) for a classifier that flips a coin with probability p of predicting 1 (heads) can be calculated as follows:
-The TPR is the probability that the classifier correctly predicts 1 for a randomly selected case (1). This probability is equal to the probability that the coin flip results in a prediction of 1, which is p. Therefore, the TPR = p.
-The FPR is the probability that the classifier incorrectly predicts 1 for a randomly selected control (0). This probability is equal to the probability that the coin flip results in a prediction of 1, given that the true label is 0, which is p * (1 - 0.2) = p * 0.8. Therefore, the FPR = p * 0.8.
-Overall, the TPR and FPR for this classifier are both directly proportional to the probability p of predicting 1. For example, if p = 0.5, the classifier will have a TPR of 0.5 and a FPR of 0.4. If p = 0.9, the classifier will have a TPR of 0.9 and a FPR of 0.72.
+The TPR and FPR will almost be equal to one another and this in turn will equal the probability p. If we simulate a classifier of this type the ROC curve would look similar to the following. The classifier would be very close to non-informative and sit tight to the 45-degree line with a TPR and FPR always very close to one another. The point is not whether the probabilities of obtaining a case is similar or not it is more whether the process is random or not. With the process being close to random it will have a poor FPR/TPR ratio
+```{R}
+# simulate true data
+set.seed(0)
+true = sample(c(1,0), prob=c(0.2,0.8), size=1000, replace=TRUE)
+
+# simulate classifier p
+prob = seq(0,1,length.out=1000)
+
+# ROC curve
+pred = prediction(prob, true)
+perf = performance(pred,'tpr','fpr')
+{plot(perf,lwd=3)
+abline(0,1,lty=3,lwd=3,col="red")}
+```
 
 ## 1.5
-performance of the classifier is influenced by the proportion of cases (1) in the population (q) in the following ways:
-As q approaches 0, the TPR and FPR of the classifier will both approach 0. This is because the probability of selecting a case (1) will approach 0, so the probability of correctly predicting 1 will also approach 0. Similarly, the probability of selecting a control (0) will approach 1, so the probability of incorrectly predicting 1 will also approach 0.
-As q approaches 0.5, the TPR and FPR of the classifier will both approach 0.5. This is because the probability of selecting a case (1) will approach 0.5, so the probability of correctly predicting 1 will also approach 0.5. Similarly, the probability of selecting a control (0) will approach 0.5, so the probability of incorrectly predicting 1 will also approach 0.5.
-As q approaches 1, the TPR and FPR of the classifier will both approach 1. This is because the probability of selecting a case (1) will approach 1, so the probability of correctly predicting 1 will also approach 1. Similarly, the probability of selecting a control (0) will approach 0, so the probability of incorrectly predicting 1 will also approach 0.
-Overall, the performance of the classifier is directly influenced by the proportion of cases in the population. As the proportion of cases increases, the TPR and FPR of the classifier will also increase.
+As q approaches 0, the TPR and FPR of the classifier will both approach 0. This is because the probability of selecting a case will approach 0, so the probability of correctly predicting 1 will also approach 0. Similarly, the probability of selecting a control will approach 1, so the probability of incorrectly predicting 1 will also approach 0. The TPR and FPR ratio as seen in a ROC is not influenced by changes in the class balance. The classifier will stay close ot a random classifier. 
 
 ## 1.6
-If a ridge regression model is fitted to a dataset with n = 50 and p = 40 covariates, it is unlikely that the optimal shrinkage parameter $\lambda$ will be equal to 0. This is because the sample size is relatively small compared to the number of covariates, and the true coefficients are known to be nonzero. In this situation, using a non-zero value of $\lambda$ can help to regularize the model and prevent over fitting by reducing the magnitude of the estimated coefficients.
-If the sample size n is increased using the same data-generating mechanism, it is likely that the optimal value of $\lambda$ will decrease. This is because increasing the sample size will provide more information about the true coefficients, and the model will be able to fit the data more accurately without regularization. As a result, a smaller value of $\lambda$ will be sufficient to prevent overfitting, and the optimal value of $\lambda$ will decrease.
-Overall, the optimal value of $\lambda$ for a ridge regression model depends on the sample size, the number of covariates, and the true coefficients in the data. In general, a larger sample size and a smaller number of covariates will result in a smaller optimal value of $\lambda$, while a smaller sample size and a larger number of covariates will result in a larger optimal value of $\lambda$.
+Because p and n are similar in size it is unlikely that $\lambda$ will be 0. The size of n is relatively small when compared to p with the true covariates also known to not be zero. This situation is ideal for ridge regression with a nonzero $\lambda$ so as to regularize the model and prevent over fitting by reducing the weight of the estimated coefficients of the model. As n increases in size by sampling from the same population we will likely see the $\lambda$ value decrease. By increasing n the true coefficients are more likely to be learned by the model reducing over fitting and the necessity for regularization. A larger n and smaller p will result in a smaller $\lambda$ whereas a smaller n and larger p will result in a larger $\lambda$.
 
 # Problem 2
 ## 2.1
@@ -238,7 +238,7 @@ upgraded_kmeans <- function(data,
         mu[i_c,] <- colMeans(data[class_vec==i_c,])
       }
       
-      sigma = cov(class_df)
+      sigma = cov(data)
       
       # calculate log likelihood
       for(i_c in 1:k){
@@ -335,7 +335,7 @@ for( i in 1:length(prob2.list)){
   # plot K-means
   plot(x=df[,1],
        y=df[,2],
-       main="K-Means",
+       main=paste("K-Means on Dataset:",i),
        col=my_kmeans(data=df,
                      seed=seed)[[2]])
   
@@ -343,7 +343,7 @@ for( i in 1:length(prob2.list)){
   # plot version 1
   plot(x=df[,1],
        y=df[,2],
-       main="V1",
+       main=paste("V1 on Dataset:",i),
        col=upgraded_kmeans(data=df,
                            version="v1",
                            init_method="random",
@@ -352,7 +352,7 @@ for( i in 1:length(prob2.list)){
   # plot version 2
   plot(x=df[,1],
        y=df[,2],
-       main="V2",
+       main=paste("V2 on Dataset:",i),
        col=upgraded_kmeans(data=df,
                            version="v2",
                            init_method="random",
@@ -365,7 +365,39 @@ for( i in 1:length(prob2.list)){
 ## 2.2
 
 ## 2.3
+```{R, out.width  =  "33%"}
+# initialize clustering with different points
+seed = 10
+for( i in 1:length(prob2.list)){
+  df = prob2.list[[i]]
+  # plot K-means
+  plot(x=df[,1],
+       y=df[,2],
+       main=paste("K-Means on Dataset:",i),
+       col=my_kmeans(data=df,
+                     seed=seed)[[2]])
+  
+  
+  # plot version 1
+  plot(x=df[,1],
+       y=df[,2],
+       main=paste("V1 on Dataset:",i),
+       col=upgraded_kmeans(data=df,
+                           version="v1",
+                           init_method="random",
+                           seed=seed))
+  
+  # plot version 2
+  plot(x=df[,1],
+       y=df[,2],
+       main=paste("V2 on Dataset:",i),
+       col=upgraded_kmeans(data=df,
+                           version="v2",
+                           init_method="random",
+                           seed=seed))
+}
 
+```
 
 
 # Problem 3
@@ -1223,7 +1255,7 @@ for(dat in 1:length(data_set_vec)){
   
 }
 # name rows in results data frame
-rownames(RMSE_df) = c("Lasso_Regression", "Random_Forest", "Generalized_Boosted_Regression")
+rownames(RMSE_df) = c("LR", "RF", "GBM")
 
 # visualize cross-validation RMSE
 # plot Lasso regression model CV results
