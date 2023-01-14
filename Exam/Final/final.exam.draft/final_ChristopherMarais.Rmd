@@ -363,6 +363,8 @@ for( i in 1:length(prob2.list)){
 
 
 ## 2.2
+True, as long as the sigma values for all he classes are the same then the original K-means should act the same way as the V1 K-Means. 
+
 
 ## 2.3
 ```{R, out.width  =  "33%"}
@@ -398,7 +400,7 @@ for( i in 1:length(prob2.list)){
 }
 
 ```
-
+With $\Sigma$ dependent on k we can see that the algorithm is much more flexible and capable of classifying different clusters more effectively. We can see that the V1 version performs similarly to the K-means method with some data sets and then again performs more similarly to V2 in others. From the testing it seems that V2 is the only method capable of classifying data set 7 correctly. The most notable observation though is that how much of an impact the initialization has on the classification. These methods all seem prone to getting stuck in local optima for classification and struggle to optimize further. Each data set was classified successfully using the V2 method when different initializations were used. 
 
 # Problem 3
 ```{R}
@@ -1062,23 +1064,19 @@ legend("bottomright",
        cex=0.75)}
 
 # display table of RMSE results for different data set sizes
-####################Briefly discuss your findings; particularly, as n increases.
 knitr::kable(RMSE_df)
 
 # variable importance of best models
-best_rf_var_importance = importance(best_rf.fit)
-knitr::kable(best_rf_var_importance)
+best_rf_var_importance = data.frame(importance(best_rf.fit))
+knitr::kable(best_rf_var_importance[order(best_rf_var_importance$X.IncMSE),])
 best_gbm_var_importance = summary(best_gbm.fit)
 knitr::kable(best_gbm_var_importance)
-
-
-
-#### Discuss what you expect: (i) as training sample size increases but the test  
-############################################ sample is held fixed; (ii) training
-########################## set is held fixed but the test sample size increases.
-
 ```
+AS n increases it seems as though the test RMSE decreases reliably. However, the RMSE during cross-validation does not decrease much for the optimal parameters as n increases. This makes sense because the validation data set grows in size alongside the training data set when n increases, but the testing data set does not increase in size. This shows us that there is some element of noise in the data that is not captured by the features. 
 
+The Random forest and the GBM method seem to agree on which 2 variables are most important. However, for the less informative variables they are not in agreement. This is expected as the two techniques take different approaches to measure importance. The top two most informative variables seem to variables 19 and 37.
+
+When the testing sample size is held constant and the training sample size increases we expect the performance of the model to improve on the testing data. When the training sample size is held fixed and the testing sample size increases we expected the model to show lower performance on the testing data. 
 
 ```{R, warning=FALSE, message = FALSE}
 # generate additional 50 features
@@ -1420,10 +1418,7 @@ knitr::kable(best_gbm_var_importance)
 ##### What do you expect to happen to the predictive performance of the methods?
 
 ```
-
-
-
-
+We expect the predictive performance of the model to decrease on the test data but increase for the validation data as more noise is added. If the variables that were added were reliably correlated to the response it would have increased our performance on the test data and the validation data. As we can see the CV RMSE is slightly lower than the original attempt, but the testing RMSE is slightly higher than the original attempt. This shows that the data added was uninformative and just noise. Even though our models can learn some of the noise, it does not increase it's predictive capabilities. 
 
 # Problem 6
 ```{R, warning=FALSE, message = FALSE}
@@ -1771,8 +1766,10 @@ MER_df[3,2] = rf_mcr
 # display mean CV MER and test MER
 knitr::kable(MER_df)
 
-################################################################Briefly discuss.
 ```
+From the misclassification Error rate (MER) in the cross-validation step and the test step we can see in all methods that the cross validation MER was worse than the test MER. This shows that each of the models still generalize better than what is estimated during training and that over fitting has not occurred.
+
+
 ```{R, fig.width=7, fig.height=7}
 
 # calculate ROC curves for each classifier using the test data
@@ -1851,5 +1848,4 @@ legend("topleft",
        cex=0.75)
 }
 ```
-
-
+From the ROC curve we can see that all the models perform better than a random model would. Each of the models likely has a different optimal threshold with the RF model likely having a lower optimal than the other two models. We can see that the GBM model performed the best, followed by the SVM model and then lastly by the RF model. The RF model could likely benefit from finer parameter tuning. 
